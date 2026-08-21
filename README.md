@@ -14,7 +14,7 @@
 
 ---
 
-**[🌐 官方主页](https://github.com/Meet7th/SeatWise)** · 
+**[🌐 官方主页](https://meet7th.github.io/SeatWise/)** · 
 **[📖 使用文档](#-使用指南)** · 
 **[🚀 立即部署](#-快速开始)**
 
