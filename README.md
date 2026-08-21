@@ -159,30 +159,76 @@ chmod +x setup.sh
 脚本会提示你粘贴 3 个 Token，然后自动完成全部部署，预计 5-8 分钟。
 
 <details>
-<summary>📋 如何获取这 3 个 Token？</summary>
+<summary>📋 如何获取 Supabase Token？（约 1 分钟）</summary>
 
-**Supabase Token（30 秒）：**
-1. 打开 [Supabase Dashboard](https://supabase.com/dashboard/account/tokens)
-2. 用 GitHub 登录
+**第 1 步：登录 Supabase**
+1. 打开浏览器，访问 https://supabase.com
+2. 点击右上角 **Sign In**
+3. 选择 **Continue with GitHub**（推荐）或用邮箱注册
+4. 授权登录后进入控制台
+
+**第 2 步：创建 Access Token**
+1. 登录后，点击左下角头像 → **Account Settings**
+2. 或直接访问 https://supabase.com/dashboard/account/tokens
 3. 点击 **Generate new token**
-4. 输入名称（如 `seatwise-deploy`）
-5. 复制生成的 Token
+4. 在 **Token Name** 输入框填写名称，如 `seatwise-deploy`
+5. 点击 **Generate token**
+6. **立即复制 Token**（只会显示一次！）
+7. 保存好这个 Token，稍后粘贴到脚本中
 
-**Vercel Token（30 秒）：**
-1. 打开 [Vercel Tokens](https://vercel.com/account/tokens)
-2. 登录账号
-3. 点击 **Create**
-4. 输入名称（如 `seatwise-deploy`）
-5. 复制生成的 Token
+> ⚠️ Token 只会显示一次，请立即复制保存。如果丢失需要重新生成。
 
-**GitHub Token（30 秒）：**
-1. 打开 [GitHub Tokens](https://github.com/settings/tokens?type=beta)
-2. 登录账号
-3. 点击 **Generate new token**
-4. 输入名称（如 `seatwise-deploy`）
-5. 权限选择 **Contents (Read and write)**
-6. 点击 **Generate token**
-7. 复制生成的 Token
+</details>
+
+<details>
+<summary>📋 如何获取 Vercel Token？（约 1 分钟）</summary>
+
+**第 1 步：登录 Vercel**
+1. 打开浏览器，访问 https://vercel.com
+2. 点击右上角 **Sign Up** 或 **Log In**
+3. 选择 **Continue with GitHub**（推荐）或用邮箱注册
+4. 授权登录后进入控制台
+
+**第 2 步：创建 Access Token**
+1. 登录后，点击右上角头像 → **Settings**
+2. 点击左侧菜单 **Tokens**
+3. 或直接访问 https://vercel.com/account/tokens
+4. 点击 **Create**
+5. 在 **Token Name** 输入框填写名称，如 `seatwise-deploy`
+6. **Scope** 选择默认即可
+7. 点击 **Create Token**
+8. **立即复制 Token**（只会显示一次！）
+9. 保存好这个 Token，稍后粘贴到脚本中
+
+> ⚠️ Token 只会显示一次，请立即复制保存。如果丢失需要重新生成。
+
+</details>
+
+<details>
+<summary>📋 如何获取 GitHub Token？（约 1 分钟）</summary>
+
+**第 1 步：登录 GitHub**
+1. 打开浏览器，访问 https://github.com
+2. 点击右上角 **Sign in**
+3. 输入用户名和密码登录
+
+**第 2 步：创建 Personal Access Token**
+1. 登录后，点击右上角头像 → **Settings**
+2. 滚动到最下方，点击左侧菜单 **Developer settings**
+3. 点击 **Personal access tokens** → **Fine-grained tokens**
+4. 点击 **Generate new token**
+5. 填写以下信息：
+   - **Token name**：输入 `seatwise-deploy`
+   - **Expiration**：选择 `7 days`（或 `30 days`）
+   - **Repository access**：选择 `All repositories`
+6. 在 **Permissions** 区域：
+   - 找到 **Contents**
+   - 点击右侧下拉菜单，选择 **Read and write**
+7. 点击 **Generate token**
+8. **立即复制 Token**（只会显示一次！）
+9. 保存好这个 Token，稍后粘贴到脚本中
+
+> ⚠️ Token 只会显示一次，请立即复制保存。如果丢失需要重新生成。
 
 </details>
 
