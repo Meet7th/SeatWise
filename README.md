@@ -108,9 +108,89 @@
 
 ## 🚀 快速开始
 
-### 方式一：Vercel 一键部署（推荐）
+### 方式一：全自动部署（推荐）
 
-> 🟢 免费 · 无需服务器 · 点击按钮即部署
+> 🟢 免费 · 只需 3 个 Token · 全部自动完成 · 无需任何手动操作
+
+**只需提供 3 个 API Token，脚本自动完成所有操作：**
+
+| 步骤 | 操作 | 状态 |
+|------|------|------|
+| ① | 检查环境 (Node.js, pnpm, curl) | 🤖 自动 |
+| ② | 创建 Supabase 数据库 | 🤖 自动 |
+| ③ | 部署后端 API 到 Vercel | 🤖 自动 |
+| ④ | 部署前端到 Vercel | 🤖 自动 |
+| ⑤ | 初始化数据库 + 灌入测试数据 | 🤖 自动 |
+| ⑥ | 关联前后端地址 | 🤖 自动 |
+
+**获取 Token（每个只需 30 秒）：**
+
+| Token | 获取地址 | 用途 |
+|-------|----------|------|
+| Supabase Token | [点击获取](https://supabase.com/dashboard/account/tokens) | 自动创建数据库 |
+| Vercel Token | [点击获取](https://vercel.com/account/tokens) | 自动部署前后端 |
+| GitHub Token | [点击获取](https://github.com/settings/tokens?type=beta) | 自动 Fork 仓库 |
+
+**运行脚本：**
+
+**Windows（CMD 或 PowerShell）：**
+
+```cmd
+:: 先下载项目
+git clone https://github.com/Meet7th/SeatWise.git
+cd SeatWise
+
+:: 运行全自动部署脚本
+setup.bat
+```
+
+**Mac / Linux（终端）：**
+
+```bash
+# 先下载项目
+git clone https://github.com/Meet7th/SeatWise.git
+cd SeatWise
+
+# 运行全自动部署脚本
+chmod +x setup.sh
+./setup.sh
+```
+
+脚本会提示你粘贴 3 个 Token，然后自动完成全部部署，预计 5-8 分钟。
+
+<details>
+<summary>📋 如何获取这 3 个 Token？</summary>
+
+**Supabase Token（30 秒）：**
+1. 打开 [Supabase Dashboard](https://supabase.com/dashboard/account/tokens)
+2. 用 GitHub 登录
+3. 点击 **Generate new token**
+4. 输入名称（如 `seatwise-deploy`）
+5. 复制生成的 Token
+
+**Vercel Token（30 秒）：**
+1. 打开 [Vercel Tokens](https://vercel.com/account/tokens)
+2. 登录账号
+3. 点击 **Create**
+4. 输入名称（如 `seatwise-deploy`）
+5. 复制生成的 Token
+
+**GitHub Token（30 秒）：**
+1. 打开 [GitHub Tokens](https://github.com/settings/tokens?type=beta)
+2. 登录账号
+3. 点击 **Generate new token**
+4. 输入名称（如 `seatwise-deploy`）
+5. 权限选择 **Contents (Read and write)**
+6. 点击 **Generate token**
+7. 复制生成的 Token
+
+</details>
+
+---
+
+### 方式二：Vercel 按钮部署
+
+> 🟢 免费 · 需要手动配置 · 适合有经验的用户
 
 #### 第 1 步：创建 Supabase 数据库（约 2 分钟）
 
@@ -222,7 +302,7 @@ npx prisma db seed
 
 ---
 
-### 方式二：脚本全自动部署
+### 方式三：脚本部署（需要手动操作）
 
 > 🟢 一行命令 · 自动安装依赖 · 自动部署 · 只需粘贴数据库地址
 
@@ -313,7 +393,7 @@ A: 确认第 4 步数据库初始化是否成功完成
 
 ---
 
-### 方式三：本地一键启动
+### 方式四：本地一键启动
 
 > 🟢 零配置 · 无需服务器 · 无需数据库 · 双击即用
 
@@ -355,7 +435,7 @@ pnpm install
 
 ---
 
-### 方式四：Docker 部署
+### 方式五：Docker 部署
 
 > 🟡 需要安装 [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
