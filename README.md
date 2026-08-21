@@ -2,6 +2,7 @@
 
 > 基于学生性格测评与多维度画像的 AI 教室座位编排系统
 
+[![GitHub release](https://img.shields.io/github/v/release/Meet7th/SeatWise?style=flat&logo=github)](https://github.com/Meet7th/SeatWise/releases)
 [![Vue 3](https://img.shields.io/badge/Vue-3-42b883?style=flat&logo=vuedotjs)](https://vuejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178c6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Prisma](https://img.shields.io/badge/Prisma-5-2D3748?style=flat&logo=prisma)](https://www.prisma.io/)

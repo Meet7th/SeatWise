@@ -1,6 +1,18 @@
 {
   "name": "seatwise",
+  "version": "1.0.0",
   "private": true,
+  "description": "AI 智能排座系统 - 基于学生性格测评与多维度画像的教室座位编排系统",
+  "author": "Meet7th",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Meet7th/SeatWise.git"
+  },
+  "homepage": "https://github.com/Meet7th/SeatWise#readme",
+  "bugs": {
+    "url": "https://github.com/Meet7th/SeatWise/issues"
+  },
   "scripts": {
     "dev": "pnpm --filter @seatwise/web dev",
     "dev:server": "pnpm --filter @seatwise/server dev",
@@ -9,7 +21,11 @@
     "cloud-deploy": "node scripts/cloud-deploy.mjs",
     "build": "pnpm --filter @seatwise/web build && pnpm --filter @seatwise/server build",
     "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "release": "node scripts/release.mjs",
+    "version:patch": "npm version patch --no-git-tag-version",
+    "version:minor": "npm version minor --no-git-tag-version",
+    "version:major": "npm version major --no-git-tag-version"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
