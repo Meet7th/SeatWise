@@ -21,10 +21,7 @@ RUN pnpm install
 COPY packages/shared/ ./packages/shared/
 COPY apps/web/ ./apps/web/
 
-# Build shared package
-RUN pnpm --filter @seatwise/shared build
-
-# Build frontend
+# Build frontend (shared package is TS-only, no build needed)
 RUN pnpm --filter @seatwise/web build
 
 # Stage 2: Serve
