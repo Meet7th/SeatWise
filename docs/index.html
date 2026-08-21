@@ -1,1655 +1,920 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智座 SeatWise — AI 智能排座系统</title>
-    <meta name="description" content="基于学生性格测评与多维度画像的 AI 教室座位编排系统">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        :root {
-            --primary: #6366F1;
-            --primary-light: #818CF8;
-            --primary-dark: #4F46E5;
-            --accent: #06B6D4;
-            --accent-light: #22D3EE;
-            --bg: #0A0A0F;
-            --bg-card: rgba(255,255,255,0.03);
-            --text: #F1F5F9;
-            --text-muted: #64748B;
-            --border: rgba(255,255,255,0.06);
-            --glow: rgba(99, 102, 241, 0.4);
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Inter', 'Noto Sans SC', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* ===== Cursor Glow ===== */
-        .cursor-glow {
-            position: fixed;
-            width: 600px;
-            height: 600px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
-            transform: translate(-50%, -50%);
-            transition: opacity 0.3s;
-        }
-
-        /* ===== Navigation ===== */
-        .nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            padding: 0 2rem;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .nav.scrolled {
-            background: rgba(10, 10, 15, 0.85);
-            backdrop-filter: blur(20px) saturate(180%);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .nav-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 72px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            color: var(--text);
-        }
-
-        .logo-mark {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .logo-mark::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.2));
-        }
-
-        .logo-text {
-            font-size: 1.25rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-        }
-
-        .nav-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: color 0.3s;
-            position: relative;
-        }
-
-        .nav-links a:not(.btn)::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--primary);
-            transition: width 0.3s;
-        }
-
-        .nav-links a:not(.btn):hover { color: var(--text); }
-        .nav-links a:not(.btn):hover::after { width: 100%; }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 22px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            cursor: pointer;
-            border: none;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            box-shadow: 0 4px 20px var(--glow);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px var(--glow);
-        }
-
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.1));
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .btn-primary:hover::before { opacity: 1; }
-
-        .btn-ghost {
-            background: rgba(255,255,255,0.05);
-            color: var(--text);
-            border: 1px solid var(--border);
-            backdrop-filter: blur(10px);
-        }
-
-        .btn-ghost:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.15);
-        }
-
-        /* ===== Hero ===== */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 120px 2rem 80px;
-            position: relative;
-        }
-
-        .hero-bg {
-            position: absolute;
-            inset: 0;
-            overflow: hidden;
-        }
-
-        .hero-bg .gradient-orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.4;
-            animation: float 20s ease-in-out infinite;
-        }
-
-        .hero-bg .orb-1 {
-            width: 600px;
-            height: 600px;
-            background: var(--primary);
-            top: -200px;
-            left: -100px;
-            animation-delay: 0s;
-        }
-
-        .hero-bg .orb-2 {
-            width: 400px;
-            height: 400px;
-            background: var(--accent);
-            bottom: -100px;
-            right: -50px;
-            animation-delay: -7s;
-        }
-
-        .hero-bg .orb-3 {
-            width: 300px;
-            height: 300px;
-            background: #EC4899;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation-delay: -14s;
-            opacity: 0.2;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(30px, -30px) scale(1.05); }
-            50% { transform: translate(-20px, 20px) scale(0.95); }
-            75% { transform: translate(10px, -10px) scale(1.02); }
-        }
-
-        .hero-grid {
-            position: absolute;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-            background-size: 60px 60px;
-            mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-            -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 1;
-            max-width: 1000px;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(99, 102, 241, 0.1);
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            padding: 8px 20px;
-            border-radius: 100px;
-            font-size: 0.85rem;
-            color: var(--primary-light);
-            margin-bottom: 2rem;
-            font-weight: 500;
-            backdrop-filter: blur(10px);
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.8s 0.2s forwards;
-        }
-
-        .hero-badge .pulse-dot {
-            width: 8px;
-            height: 8px;
-            background: #10B981;
-            border-radius: 50%;
-            position: relative;
-        }
-
-        .hero-badge .pulse-dot::after {
-            content: '';
-            position: absolute;
-            inset: -4px;
-            border-radius: 50%;
-            background: #10B981;
-            animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-        }
-
-        @keyframes ping {
-            75%, 100% { transform: scale(2); opacity: 0; }
-        }
-
-        .hero h1 {
-            font-size: clamp(3rem, 7vw, 5.5rem);
-            font-weight: 900;
-            letter-spacing: -0.04em;
-            line-height: 1.05;
-            margin-bottom: 1.5rem;
-            opacity: 0;
-            transform: translateY(30px);
-            animation: fadeInUp 0.8s 0.4s forwards;
-        }
-
-        .hero h1 .line {
-            display: block;
-        }
-
-        .hero h1 .gradient-text {
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent-light) 50%, #EC4899 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            background-size: 200% auto;
-            animation: gradientShift 4s ease-in-out infinite;
-        }
-
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% center; }
-            50% { background-position: 100% center; }
-        }
-
-        .hero-desc {
-            font-size: 1.2rem;
-            color: var(--text-muted);
-            max-width: 650px;
-            margin: 0 auto 3rem;
-            line-height: 1.8;
-            opacity: 0;
-            transform: translateY(30px);
-            animation: fadeInUp 0.8s 0.6s forwards;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            opacity: 0;
-            transform: translateY(30px);
-            animation: fadeInUp 0.8s 0.8s forwards;
-        }
-
-        .hero-visual {
-            margin-top: 5rem;
-            opacity: 0;
-            transform: translateY(40px);
-            animation: fadeInUp 1s 1s forwards;
-        }
-
-        .hero-visual-inner {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 2rem;
-            backdrop-filter: blur(20px);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero-visual-inner::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--primary), transparent);
-        }
-
-        .visual-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 1.5rem;
-        }
-
-        .visual-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .visual-dot.red { background: #EF4444; }
-        .visual-dot.yellow { background: #F59E0B; }
-        .visual-dot.green { background: #10B981; }
-
-        .visual-title {
-            margin-left: auto;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .classroom-preview {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 8px;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .seat {
-            aspect-ratio: 1;
-            border-radius: 8px;
-            transition: all 0.3s;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .seat:hover {
-            transform: scale(1.15);
-            z-index: 10;
-        }
-
-        .seat.empty {
-            background: rgba(255,255,255,0.03);
-            border: 1px dashed rgba(255,255,255,0.1);
-        }
-
-        .seat.occupied {
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .seat.occupied::after {
-            content: '';
-            position: absolute;
-            inset: 3px;
-            border-radius: 6px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            opacity: 0.6;
-        }
-
-        .seat.occupied:hover::after {
-            opacity: 1;
-        }
-
-        .seat.teacher {
-            grid-column: span 8;
-            aspect-ratio: 8;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(6, 182, 212, 0.2));
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85rem;
-            color: var(--primary-light);
-            font-weight: 600;
-        }
-
-        @keyframes fadeInUp {
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ===== Floating Particles ===== */
-        .particles {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: var(--primary-light);
-            border-radius: 50%;
-            opacity: 0;
-            animation: particleFloat linear infinite;
-        }
-
-        @keyframes particleFloat {
-            0% { opacity: 0; transform: translateY(100vh) scale(0); }
-            10% { opacity: 0.6; }
-            90% { opacity: 0.6; }
-            100% { opacity: 0; transform: translateY(-10vh) scale(1); }
-        }
-
-        /* ===== Section Common ===== */
-        .section {
-            padding: 120px 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-            position: relative;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 5rem;
-        }
-
-        .section-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            color: var(--primary-light);
-            margin-bottom: 1.25rem;
-            background: rgba(99, 102, 241, 0.1);
-            padding: 6px 16px;
-            border-radius: 100px;
-            border: 1px solid rgba(99, 102, 241, 0.2);
-        }
-
-        .section-title {
-            font-size: clamp(2rem, 4vw, 3rem);
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            margin-bottom: 1rem;
-        }
-
-        .section-desc {
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            max-width: 550px;
-            margin: 0 auto;
-            line-height: 1.7;
-        }
-
-        /* ===== Scroll Reveal ===== */
-        .reveal {
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .reveal.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .reveal-delay-1 { transition-delay: 0.1s; }
-        .reveal-delay-2 { transition-delay: 0.2s; }
-        .reveal-delay-3 { transition-delay: 0.3s; }
-        .reveal-delay-4 { transition-delay: 0.4s; }
-        .reveal-delay-5 { transition-delay: 0.5s; }
-
-        /* ===== Features ===== */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.5rem;
-        }
-
-        .feature-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 2.5rem 2rem;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--primary), transparent);
-            opacity: 0;
-            transition: opacity 0.4s;
-        }
-
-        .feature-card:hover {
-            border-color: rgba(99, 102, 241, 0.3);
-            transform: translateY(-8px);
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
-        }
-
-        .feature-card:hover::before { opacity: 1; }
-
-        .feature-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.75rem;
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
-
-        .feature-icon::after {
-            content: '';
-            position: absolute;
-            inset: -8px;
-            border-radius: 20px;
-            opacity: 0.15;
-            filter: blur(15px);
-        }
-
-        .feature-icon.purple { background: rgba(99, 102, 241, 0.15); }
-        .feature-icon.purple::after { background: var(--primary); }
-        .feature-icon.cyan { background: rgba(6, 182, 212, 0.15); }
-        .feature-icon.cyan::after { background: var(--accent); }
-        .feature-icon.green { background: rgba(16, 185, 129, 0.15); }
-        .feature-icon.green::after { background: #10B981; }
-        .feature-icon.orange { background: rgba(245, 158, 11, 0.15); }
-        .feature-icon.orange::after { background: #F59E0B; }
-        .feature-icon.pink { background: rgba(236, 72, 153, 0.15); }
-        .feature-icon.pink::after { background: #EC4899; }
-        .feature-icon.blue { background: rgba(59, 130, 246, 0.15); }
-        .feature-icon.blue::after { background: #3B82F6; }
-
-        .feature-card h3 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 0.75rem;
-            letter-spacing: -0.01em;
-        }
-
-        .feature-card p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            line-height: 1.7;
-        }
-
-        /* ===== Steps ===== */
-        .steps-container {
-            position: relative;
-        }
-
-        .steps-line {
-            position: absolute;
-            top: 60px;
-            left: 10%;
-            right: 10%;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
-            opacity: 0.2;
-        }
-
-        .steps-line-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            width: 0;
-            transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .steps-line-fill.animate { width: 100%; }
-
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 2rem;
-            position: relative;
-        }
-
-        .step {
-            text-align: center;
-        }
-
-        .step-icon {
-            width: 120px;
-            height: 120px;
-            border-radius: 24px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            margin: 0 auto 1.5rem;
-            position: relative;
-            transition: all 0.4s;
-        }
-
-        .step:hover .step-icon {
-            border-color: var(--primary);
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-        }
-
-        .step-num {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85rem;
-            font-weight: 700;
-        }
-
-        .step h3 {
-            font-size: 1.15rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .step p {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            line-height: 1.6;
-        }
-
-        /* ===== Stats ===== */
-        .stats-section {
-            padding: 80px 2rem;
-            background: linear-gradient(180deg, transparent, rgba(99, 102, 241, 0.03), transparent);
-        }
-
-        .stats-grid {
-            max-width: 1000px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 2rem;
-        }
-
-        .stat-card {
-            text-align: center;
-            padding: 2rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            transition: all 0.3s;
-        }
-
-        .stat-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-4px);
-        }
-
-        .stat-value {
-            font-size: 3rem;
-            font-weight: 900;
-            letter-spacing: -0.04em;
-            background: linear-gradient(135deg, var(--text), var(--primary-light));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-top: 0.5rem;
-        }
-
-        /* ===== AI Section ===== */
-        .ai-section {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .ai-card {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(6, 182, 212, 0.08));
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            border-radius: 24px;
-            padding: 4rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .ai-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--primary), var(--accent), transparent);
-        }
-
-        .ai-card::after {
-            content: '';
-            position: absolute;
-            bottom: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
-            animation: rotateSlow 30s linear infinite;
-        }
-
-        @keyframes rotateSlow {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .ai-icon {
-            font-size: 4rem;
-            margin-bottom: 1.5rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .ai-card h2 {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .ai-card > p {
-            color: var(--text-muted);
-            font-size: 1.05rem;
-            max-width: 600px;
-            margin: 0 auto 2rem;
-            line-height: 1.7;
-            position: relative;
-            z-index: 1;
-        }
-
-        .ai-badges {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            position: relative;
-            z-index: 1;
-        }
-
-        .ai-badge {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            padding: 10px 20px;
-            border-radius: 100px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s;
-        }
-
-        .ai-badge:hover {
-            border-color: var(--primary);
-            color: var(--text);
-        }
-
-        /* ===== Deploy ===== */
-        .deploy-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.5rem;
-        }
-
-        .deploy-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 2.5rem 2rem;
-            text-align: center;
-            transition: all 0.4s;
-            position: relative;
-        }
-
-        .deploy-card:hover {
-            border-color: rgba(99, 102, 241, 0.3);
-            transform: translateY(-8px);
-        }
-
-        .deploy-card.featured {
-            border-color: var(--primary);
-            box-shadow: 0 0 40px rgba(99, 102, 241, 0.15);
-        }
-
-        .deploy-card.featured::before {
-            content: '推荐';
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: white;
-            padding: 4px 20px;
-            border-radius: 100px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .deploy-icon {
-            font-size: 3rem;
-            margin-bottom: 1.25rem;
-        }
-
-        .deploy-card h3 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .deploy-card .desc {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-            line-height: 1.6;
-        }
-
-        .deploy-tags {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 1.75rem;
-        }
-
-        .deploy-tag {
-            background: rgba(255,255,255,0.03);
-            padding: 5px 12px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            border: 1px solid var(--border);
-        }
-
-        /* ===== Tech ===== */
-        .tech-marquee {
-            overflow: hidden;
-            padding: 2rem 0;
-            mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
-            -webkit-mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
-        }
-
-        .tech-track {
-            display: flex;
-            gap: 1.5rem;
-            animation: marquee 30s linear infinite;
-            width: max-content;
-        }
-
-        .tech-track:hover {
-            animation-play-state: paused;
-        }
-
-        @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-
-        .tech-item {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.5rem 2rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            white-space: nowrap;
-            transition: all 0.3s;
-            min-width: 180px;
-        }
-
-        .tech-item:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-        }
-
-        .tech-item .icon {
-            font-size: 1.75rem;
-        }
-
-        .tech-item .info h4 {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .tech-item .info p {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        /* ===== FAQ ===== */
-        .faq-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .faq-item {
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            margin-bottom: 1rem;
-            overflow: hidden;
-            transition: all 0.3s;
-            background: var(--bg-card);
-        }
-
-        .faq-item:hover {
-            border-color: rgba(99, 102, 241, 0.3);
-        }
-
-        .faq-item.active {
-            border-color: var(--primary);
-        }
-
-        .faq-question {
-            padding: 1.5rem 2rem;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 600;
-            font-size: 1.05rem;
-            transition: all 0.3s;
-        }
-
-        .faq-question:hover {
-            color: var(--primary-light);
-        }
-
-        .faq-arrow {
-            width: 24px;
-            height: 24px;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.05);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-            flex-shrink: 0;
-        }
-
-        .faq-item.active .faq-arrow {
-            background: var(--primary);
-            transform: rotate(180deg);
-        }
-
-        .faq-answer {
-            max-height: 0;
-            overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .faq-item.active .faq-answer {
-            max-height: 200px;
-        }
-
-        .faq-answer-inner {
-            padding: 0 2rem 1.5rem;
-            color: var(--text-muted);
-            line-height: 1.7;
-        }
-
-        /* ===== CTA ===== */
-        .cta-section {
-            text-align: center;
-            padding: 120px 2rem;
-            position: relative;
-        }
-
-        .cta-section h2 {
-            font-size: clamp(2rem, 4vw, 3.5rem);
-            font-weight: 900;
-            letter-spacing: -0.03em;
-            margin-bottom: 1rem;
-        }
-
-        .cta-section p {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            margin-bottom: 2.5rem;
-        }
-
-        /* ===== Footer ===== */
-        .footer {
-            border-top: 1px solid var(--border);
-            padding: 3rem 2rem;
-        }
-
-        .footer-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .footer-left {
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-        }
-
-        .footer p {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .footer-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.85rem;
-            transition: color 0.3s;
-        }
-
-        .footer-links a:hover { color: var(--text); }
-
-        /* ===== Responsive ===== */
-        @media (max-width: 1024px) {
-            .features-grid { grid-template-columns: repeat(2, 1fr); }
-            .deploy-grid { grid-template-columns: repeat(2, 1fr); }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        @media (max-width: 768px) {
-            .nav-links { display: none; }
-            .features-grid { grid-template-columns: 1fr; }
-            .steps { grid-template-columns: 1fr 1fr; }
-            .steps-line { display: none; }
-            .deploy-grid { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: 1fr 1fr; }
-            .tech-track { animation-duration: 20s; }
-            .classroom-preview { grid-template-columns: repeat(6, 1fr); }
-            .ai-card { padding: 2.5rem 1.5rem; }
-            .footer-inner { flex-direction: column; gap: 1.5rem; text-align: center; }
-            .footer-left { flex-direction: column; gap: 1rem; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智座 SeatWise - AI 驱动的智能排座系统</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0A0A0F;
+  --surface:rgba(255,255,255,0.03);
+  --surface-up:rgba(255,255,255,0.06);
+  --accent:#6366F1;
+  --accent-soft:rgba(99,102,241,0.08);
+  --accent-border:rgba(99,102,241,0.15);
+  --cyan:#06B6D4;
+  --cyan-soft:rgba(6,182,212,0.08);
+  --cyan-border:rgba(6,182,212,0.15);
+  --fg:#CBD5E1;
+  --fg-bright:#F1F5F9;
+  --muted:#94A3B8;
+  --border:rgba(255,255,255,0.06);
+  --success:#10B981;
+  --danger:#EC4899;
+  --danger-soft:rgba(236,72,153,0.08);
+  --danger-border:rgba(236,72,153,0.15);
+  --radius-lg:20px;
+  --radius-md:14px;
+  --radius-sm:10px;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  font-family:'Outfit','Noto Sans SC',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--fg);
+  overflow-x:hidden;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+
+/* ===== Grid BG ===== */
+.grid-bg{
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(ellipse 80% 50% at 50% 20%,black,transparent);
+}
+
+/* ===== Nav ===== */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:0 2rem;height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:all .3s;border-bottom:1px solid transparent;
+}
+.nav.scrolled{
+  background:rgba(10,10,15,0.88);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom-color:var(--border);
+}
+.nav-logo{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:1.05rem;color:var(--fg-bright)}
+.nav-logo svg{width:26px;height:26px}
+.nav-links{display:flex;align-items:center;gap:1.75rem}
+.nav-links a{font-size:.875rem;color:var(--muted);font-weight:500;transition:color .2s;letter-spacing:.01em}
+.nav-links a:hover{color:var(--fg-bright)}
+.btn-ghost{
+  display:inline-flex;align-items:center;gap:.45rem;
+  padding:.5rem 1rem;border-radius:var(--radius-sm);
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  font-size:.85rem;font-weight:500;transition:all .2s;
+}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.12)}
+.nav-mobile-btn{display:none;background:none;border:none;color:var(--fg-bright);cursor:pointer;padding:.5rem}
+
+/* ===== Hero — Left-aligned split ===== */
+.hero{
+  position:relative;z-index:1;
+  max-width:1200px;margin:0 auto;
+  padding:8rem 2rem 4.5rem;
+  display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;
+}
+.hero-left{text-align:left}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.35rem 1rem;border-radius:100px;
+  background:var(--accent-soft);border:1px solid var(--accent-border);
+  font-size:.78rem;color:var(--accent);font-weight:600;
+  letter-spacing:.02em;margin-bottom:1.5rem;
+}
+.hero-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--success)}
+.hero h1{
+  font-size:clamp(2.2rem,5vw,3.6rem);font-weight:800;
+  line-height:1.12;margin-bottom:1.25rem;
+  letter-spacing:-0.03em;color:var(--fg-bright);
+}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero-sub{
+  font-size:clamp(.92rem,1.6vw,1.05rem);color:var(--muted);
+  max-width:440px;line-height:1.7;
+  letter-spacing:.005em;margin-bottom:2rem;
+}
+.hero-buttons{display:flex;gap:.75rem;flex-wrap:wrap}
+.hero-right{
+  display:flex;justify-content:center;align-items:center;
+  position:relative;
+}
+
+/* ===== Seat Preview ===== */
+.seat-preview{
+  position:relative;
+  width:min(480px,100%);aspect-ratio:16/10;
+  display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(4,1fr);
+  gap:6px;padding:1.25rem;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+}
+.seat-preview::before{
+  content:'';position:absolute;inset:-1px;border-radius:var(--radius-lg);
+  background:linear-gradient(135deg,rgba(99,102,241,0.12),transparent 40%,transparent 60%,rgba(6,182,212,0.12));
+  pointer-events:none;z-index:-1;
+}
+.seat{
+  border-radius:var(--radius-sm);
+  background:rgba(99,102,241,0.05);
+  border:1px solid rgba(99,102,241,0.08);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.55rem;color:var(--accent);font-weight:600;
+  opacity:0;transform:scale(0.5);
+  transition:all .3s;position:relative;
+  letter-spacing:.02em;cursor:pointer;
+}
+.seat.visible{opacity:1;transform:scale(1)}
+.seat:hover{
+  background:rgba(99,102,241,0.14);
+  border-color:rgba(99,102,241,0.3);
+  transform:scale(1.08);
+}
+.seat.highlight{
+  background:rgba(6,182,212,0.1);
+  border-color:rgba(6,182,212,0.25);
+  color:var(--cyan);
+}
+
+/* ===== Section Common ===== */
+.section{
+  position:relative;z-index:1;
+  max-width:1200px;margin:0 auto;padding:5rem 2rem;
+}
+.section-label{
+  display:inline-flex;align-items:center;gap:.4rem;
+  padding:.28rem .8rem;border-radius:100px;
+  background:var(--accent-soft);border:1px solid var(--accent-border);
+  font-size:.72rem;color:var(--accent);font-weight:600;
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem;
+}
+.section-title{
+  font-size:clamp(1.5rem,3.2vw,2.2rem);font-weight:800;
+  margin-bottom:.6rem;letter-spacing:-0.025em;color:var(--fg-bright);
+  line-height:1.15;
+}
+.section-desc{
+  font-size:.95rem;color:var(--muted);max-width:520px;margin-bottom:2.5rem;
+  line-height:1.7;letter-spacing:.005em;
+}
+.reveal{opacity:0;transform:translateY(20px);transition:all .6s cubic-bezier(.16,1,.3,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* ===== Features Bento — Asymmetric ===== */
+.bento-grid{
+  display:grid;
+  grid-template-columns:1.2fr 0.8fr;
+  grid-template-rows:auto auto auto;
+  gap:.85rem;
+}
+.bento-card{
+  padding:1.6rem;border-radius:var(--radius-lg);
+  background:var(--surface);border:1px solid var(--border);
+  transition:all .3s;
+  position:relative;overflow:hidden;
+}
+.bento-card:hover{
+  border-color:rgba(255,255,255,0.1);
+  background:var(--surface-up);
+}
+.bento-card.wide{grid-column:span 2}
+.bento-card.tall{grid-row:span 2}
+.bento-icon{
+  width:38px;height:38px;border-radius:var(--radius-sm);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:.75rem;
+}
+.bento-icon.ai{background:var(--accent-soft);border:1px solid var(--accent-border)}
+.bento-icon.cyan{background:var(--cyan-soft);border:1px solid var(--cyan-border)}
+.bento-card h3{font-size:.95rem;font-weight:700;margin-bottom:.3rem;color:var(--fg-bright);letter-spacing:-0.01em}
+.bento-card>p{font-size:.82rem;color:var(--muted);line-height:1.6}
+.bento-card.wide p{max-width:440px}
+
+/* Expandable detail */
+.bento-detail{
+  max-height:0;overflow:hidden;
+  transition:max-height .4s cubic-bezier(.16,1,.3,1);
+}
+.bento-detail.open{max-height:200px}
+.bento-detail-inner{
+  padding-top:.75rem;margin-top:.75rem;
+  border-top:1px solid var(--border);
+  font-size:.78rem;color:var(--muted);line-height:1.65;
+}
+.bento-expand{
+  display:inline-flex;align-items:center;gap:.3rem;
+  margin-top:.6rem;font-size:.75rem;color:var(--accent);
+  font-weight:600;cursor:pointer;transition:color .2s;
+}
+.bento-expand:hover{color:var(--fg-bright)}
+.bento-expand svg{width:14px;height:14px;transition:transform .3s}
+.bento-expand.open svg{transform:rotate(180deg)}
+
+/* ===== Comparison — Narrative ===== */
+.comparison-container{
+  display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;
+  margin-top:2rem;
+}
+.comp-side{
+  border-radius:var(--radius-lg);
+  padding:1.75rem;position:relative;overflow:hidden;
+}
+.comp-before{background:var(--surface);border:1px solid var(--border)}
+.comp-after{background:rgba(99,102,241,0.03);border:1px solid rgba(99,102,241,0.12)}
+.comp-tag{
+  display:inline-flex;align-items:center;gap:.35rem;
+  padding:.25rem .7rem;border-radius:100px;
+  font-size:.72rem;font-weight:700;letter-spacing:.04em;
+  margin-bottom:.85rem;
+}
+.comp-before .comp-tag{background:var(--danger-soft);border:1px solid var(--danger-border);color:#F472B6}
+.comp-after .comp-tag{background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.15);color:#34D399}
+.comp-side h3{font-size:1rem;font-weight:700;margin-bottom:.25rem;color:var(--fg-bright);letter-spacing:-0.01em}
+.comp-story{
+  font-size:.82rem;color:var(--muted);line-height:1.65;margin-bottom:1.25rem;
+  padding:.75rem 1rem;border-radius:var(--radius-sm);
+  background:rgba(255,255,255,0.02);border:1px solid var(--border);
+  font-style:italic;
+}
+.comp-story strong{color:var(--fg-bright);font-style:normal}
+
+.seat-grid-5x4{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.seat-cell{
+  aspect-ratio:1;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.5rem;font-weight:600;
+  transition:all .3s;letter-spacing:.02em;
+}
+.seat-cell.s-before{background:rgba(236,72,153,0.05);border:1px solid rgba(236,72,153,0.08);color:#F472B6}
+.seat-cell.s-after{background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.08);color:#34D399}
+.seat-cell.s-highlight{background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.25);box-shadow:0 0 6px rgba(16,185,129,0.12)}
+
+.issue-list{display:flex;flex-direction:column;gap:.35rem;margin-top:1rem}
+.issue{display:flex;align-items:center;gap:.4rem;font-size:.76rem;color:var(--muted)}
+.issue-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.issue-dot.d-bad{background:#F472B6}
+.issue-dot.d-good{background:#34D399}
+
+.comp-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:1.1rem}
+.metric{text-align:center;padding:.55rem .3rem;border-radius:var(--radius-sm);background:rgba(255,255,255,0.02);border:1px solid var(--border)}
+.metric-val{font-size:1.15rem;font-weight:800;color:var(--accent)}
+.metric-lbl{font-size:.58rem;color:var(--muted);margin-top:.1rem;letter-spacing:.02em}
+
+/* ===== Workflow — Timeline ===== */
+.workflow-timeline{
+  position:relative;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  margin-top:2rem;
+}
+.workflow-timeline::before{
+  content:'';position:absolute;
+  top:28px;left:12.5%;right:12.5%;
+  height:2px;
+  background:linear-gradient(90deg,var(--accent-border),var(--accent),var(--cyan),var(--cyan-border));
+}
+.wf-step{
+  text-align:center;padding:0 1rem;
+  position:relative;
+}
+.wf-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:40px;height:40px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--accent);
+  font-size:.85rem;font-weight:700;color:var(--accent);
+  margin-bottom:1rem;position:relative;z-index:1;
+  transition:all .3s;
+}
+.wf-step:nth-child(3) .wf-num,
+.wf-step:nth-child(4) .wf-num{border-color:var(--cyan);color:var(--cyan)}
+.wf-step:hover .wf-num{background:var(--accent);color:#fff}
+.wf-step:nth-child(3):hover .wf-num,
+.wf-step:nth-child(4):hover .wf-num{background:var(--cyan);color:#fff}
+.wf-step h4{font-size:.9rem;font-weight:700;margin-bottom:.2rem;color:var(--fg-bright);letter-spacing:-0.01em}
+.wf-step p{font-size:.76rem;color:var(--muted);line-height:1.5}
+
+/* ===== FAQ ===== */
+.faq-list{max-width:720px;display:flex;flex-direction:column;gap:.5rem}
+.faq-item{
+  border-radius:var(--radius-lg);
+  background:var(--surface);border:1px solid var(--border);
+  overflow:hidden;transition:border-color .3s;
+}
+.faq-item.open{border-color:rgba(99,102,241,0.15)}
+.faq-question{
+  width:100%;padding:1rem 1.25rem;display:flex;
+  align-items:center;justify-content:space-between;
+  font-size:.88rem;font-weight:600;color:var(--fg-bright);text-align:left;
+  transition:color .2s;letter-spacing:-0.005em;
+}
+.faq-question:hover{color:var(--accent)}
+.faq-arrow{
+  width:16px;height:16px;transition:transform .3s;color:var(--muted);
+  flex-shrink:0;margin-left:1rem;
+}
+.faq-item.open .faq-arrow{transform:rotate(180deg);color:var(--accent)}
+.faq-answer{
+  max-height:0;overflow:hidden;
+  transition:max-height .4s cubic-bezier(.16,1,.3,1);
+}
+.faq-answer-inner{
+  padding:0 1.25rem 1rem;
+  font-size:.83rem;color:var(--muted);line-height:1.7;
+}
+
+/* ===== CTA ===== */
+.cta{
+  text-align:center;padding:5rem 2rem;
+  position:relative;z-index:1;
+}
+.cta-inner{
+  max-width:600px;margin:0 auto;
+  padding:3rem 2.5rem;border-radius:var(--radius-lg);
+  background:var(--surface);border:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.cta-inner::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--cyan));
+}
+.cta h2{
+  font-size:clamp(1.5rem,3vw,2rem);font-weight:800;
+  margin-bottom:.5rem;letter-spacing:-0.02em;color:var(--fg-bright);
+}
+.cta p{font-size:.9rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.65}
+.cta-buttons{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+
+/* ===== Buttons ===== */
+.btn-primary{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.65rem 1.5rem;border-radius:var(--radius-md);
+  background:var(--accent);color:#fff;font-weight:600;font-size:.9rem;
+  transition:all .25s;letter-spacing:.01em;
+}
+.btn-primary:hover{transform:translateY(-1px);filter:brightness(1.1)}
+.btn-secondary{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.65rem 1.5rem;border-radius:var(--radius-md);
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  color:var(--fg-bright);font-weight:600;font-size:.9rem;transition:all .25s;
+}
+.btn-secondary:hover{background:rgba(255,255,255,0.08);transform:translateY(-1px)}
+
+/* ===== Footer ===== */
+.footer{
+  position:relative;z-index:1;
+  border-top:1px solid var(--border);
+  padding:1.75rem 2rem;max-width:1200px;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:.78rem;color:var(--muted);
+}
+.footer-links{display:flex;gap:1.5rem}
+.footer-links a{transition:color .2s}
+.footer-links a:hover{color:var(--fg-bright)}
+
+/* ===== Responsive ===== */
+@media(max-width:1024px){
+  .hero{grid-template-columns:1fr;gap:2.5rem;text-align:center;padding-top:7rem}
+  .hero-left{display:flex;flex-direction:column;align-items:center}
+  .hero-sub{margin-left:auto;margin-right:auto}
+  .hero-buttons{justify-content:center}
+  .bento-grid{grid-template-columns:1fr 1fr}
+  .bento-card.wide{grid-column:span 2}
+  .bento-card.tall{grid-row:span 1}
+  .workflow-timeline::before{left:5%;right:5%}
+}
+@media(max-width:768px){
+  .nav-links{display:none}
+  .nav-mobile-btn{display:block}
+  .bento-grid{grid-template-columns:1fr}
+  .bento-card.wide{grid-column:span 1}
+  .comparison-container{grid-template-columns:1fr}
+  .workflow-timeline{grid-template-columns:1fr 1fr;gap:1.5rem}
+  .workflow-timeline::before{display:none}
+  .hero h1{font-size:1.8rem}
+  .section{padding:3.5rem 1.25rem}
+  .seat-preview{width:100%}
+  .footer{flex-direction:column;gap:1rem;text-align:center}
+  .comp-metrics{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:480px){
+  .workflow-timeline{grid-template-columns:1fr}
+  .hero{padding-top:6rem}
+}
+
+/* ===== Skip Link ===== */
+.skip-link{
+  position:absolute;top:-100%;left:1rem;z-index:200;
+  padding:.5rem 1rem;border-radius:var(--radius-sm);
+  background:var(--accent);color:#fff;font-size:.85rem;font-weight:600;
+  transition:top .2s;
+}
+.skip-link:focus{top:1rem}
+
+/* ===== Focus Visible ===== */
+:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px;
+}
+:focus:not(:focus-visible){outline:none}
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-ghost:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px;
+}
+.faq-question:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--radius-sm);
+}
+.bento-expand:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;
+}
+
+/* ===== Button Active / Disabled ===== */
+.btn-primary:active{transform:translateY(0);filter:brightness(0.95)}
+.btn-secondary:active{transform:translateY(0);background:rgba(255,255,255,0.06)}
+.btn-primary[disabled],.btn-secondary[disabled]{
+  opacity:.4;pointer-events:none;cursor:not-allowed;
+}
+
+/* ===== Mobile Menu (class-based) ===== */
+.nav-links.open{
+  display:flex!important;
+  position:fixed;top:64px;left:0;right:0;
+  flex-direction:column;
+  background:rgba(10,10,15,0.96);
+  padding:1.5rem;gap:1rem;
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  z-index:99;
+}
+
+/* ===== Section Spacing Rhythm ===== */
+.section:nth-of-type(odd){padding-top:5.5rem;padding-bottom:4rem}
+.section:nth-of-type(even){padding-top:4rem;padding-bottom:5.5rem}
+
+/* ===== Reduced Motion ===== */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:0.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:0.01ms!important;
+    scroll-behavior:auto!important;
+  }
+  .reveal{opacity:1;transform:none}
+  .seat{opacity:1;transform:none}
+  .seat-cell{opacity:1;transform:none}
+}
+</style>
 </head>
 <body>
 
-    <div class="cursor-glow" id="cursorGlow"></div>
+<a href="#features" class="skip-link">跳转到主要内容</a>
+<div class="grid-bg"></div>
 
-    <!-- Navigation -->
-    <nav class="nav" id="nav">
-        <div class="nav-inner">
-            <a href="#" class="logo">
-                <div class="logo-mark">🪑</div>
-                <span class="logo-text">SeatWise</span>
-            </a>
-            <div class="nav-links">
-                <a href="#features">功能</a>
-                <a href="#workflow">流程</a>
-                <a href="#deploy">部署</a>
-                <a href="#tech">技术</a>
-                <a href="#faq">FAQ</a>
-                <a href="https://github.com/Meet7th/SeatWise" class="btn btn-primary" target="_blank">⭐ GitHub</a>
-            </div>
+<!-- Nav -->
+<nav class="nav" data-od-id="nav">
+  <a href="#" class="nav-logo" data-od-id="nav-logo">
+    <svg viewBox="0 0 32 32" fill="none"><rect x="4" y="18" width="24" height="10" rx="3" fill="#6366F1"/><rect x="6" y="8" width="6" height="14" rx="2" fill="#818CF8"/><rect x="13" y="8" width="6" height="14" rx="2" fill="#06B6D4"/><rect x="20" y="8" width="6" height="14" rx="2" fill="#22D3EE"/></svg>
+    SeatWise
+  </a>
+  <div class="nav-links" data-od-id="nav-links" id="nav-links">
+    <a href="#features">功能</a>
+    <a href="#comparison">对比</a>
+    <a href="#workflow">流程</a>
+    <a href="#faq">FAQ</a>
+    <a href="https://github.com/Meet7th/SeatWise" target="_blank" class="btn-ghost">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub
+    </a>
+  </div>
+  <button class="nav-mobile-btn" data-od-id="mobile-menu-btn" aria-label="菜单" aria-expanded="false" aria-controls="nav-links">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+</nav>
+
+<main id="main-content">
+
+<!-- Hero — Left-aligned -->
+<section class="hero" data-od-id="hero">
+  <div class="hero-left">
+    <div class="hero-badge" data-od-id="hero-badge">
+      <span class="dot"></span>
+      开源免费 · 面向初高中教师
+    </div>
+    <h1 data-od-id="hero-title">
+      排座不该<br>靠<em>运气</em>
+    </h1>
+    <p class="hero-sub" data-od-id="hero-sub">
+      35 道性格测评，3 分钟出方案。<br>
+      MBTI、学习风格、社交类型——AI 帮你把每个学生放到最合适的位置。
+    </p>
+    <div class="hero-buttons" data-od-id="hero-buttons">
+      <a href="https://github.com/Meet7th/SeatWise" target="_blank" class="btn-primary">
+        免费开始
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a href="#features" class="btn-secondary">看看能做什么</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="seat-preview" data-od-id="seat-preview" id="seatPreview" role="grid" aria-label="教室座位预览"></div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="section" id="features" data-od-id="features">
+  <div class="reveal">
+    <div class="section-label">核心功能</div>
+    <h2 class="section-title">你只需要点一下</h2>
+    <p class="section-desc">从测评到出方案，AI 处理所有复杂计算。你专注教学，剩下的交给 SeatWise。</p>
+  </div>
+  <div class="bento-grid">
+    <!-- AI 排座 - wide -->
+    <div class="bento-card wide reveal" data-od-id="feature-ai">
+      <div class="bento-icon ai">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v1a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M6 10h12l-1 10H7L6 10z"/><circle cx="12" cy="16" r="2"/></svg>
+      </div>
+      <h3>一键生成最优方案</h3>
+      <p>概率引擎综合 35 维度数据，自动规避性格冲突、匹配学习风格。支持性别均衡、特殊需求、黑白名单等约束。</p>
+      <div class="bento-expand" onclick="toggleDetail(this)">
+        查看支持的约束条件
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="bento-detail">
+        <div class="bento-detail-inner">
+          性别均衡 · 特殊需求优先 · 黑白名单 · 固定座位 · 相邻/隔离约束 · 视力/听力调整 · 小组搭配 · 轮换周期
         </div>
-    </nav>
+      </div>
+    </div>
+    <!-- 可视化编辑 - wide -->
+    <div class="bento-card wide reveal" data-od-id="feature-visual">
+      <div class="bento-icon cyan">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <h3>拖拽调整，所见即所得</h3>
+      <p>教室网格可视化，热力图显示性格分布。不满意？直接拖拽换座，AI 实时重新计算兼容性。</p>
+    </div>
+    <!-- 性格测评 -->
+    <div class="bento-card reveal" data-od-id="feature-test">
+      <div class="bento-icon ai">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 12h6M7 17h8"/></svg>
+      </div>
+      <h3>35 道科学测评</h3>
+      <p>覆盖 MBTI、学习风格、社交类型，约 15 分钟完成。学生手机扫码即可作答。</p>
+    </div>
+    <!-- 学生画像 -->
+    <div class="bento-card reveal" data-od-id="feature-profile">
+      <div class="bento-icon cyan">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      </div>
+      <h3>学生画像报告</h3>
+      <p>自动计算综合评分，生成 MBTI 类型、学习风格标签，雷达图可视化每个学生的特质。</p>
+    </div>
+    <!-- 申诉管理 -->
+    <div class="bento-card reveal" data-od-id="feature-appeal">
+      <div class="bento-icon ai">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
+      </div>
+      <h3>学生申诉机制</h3>
+      <p>觉得座位不合适？学生可以提交申诉，AI 分析合理性并给出建议，你一键审批。</p>
+    </div>
+    <!-- 数据导出 -->
+    <div class="bento-card reveal" data-od-id="feature-export">
+      <div class="bento-icon cyan">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </div>
+      <h3>一键导出</h3>
+      <p>CSV 座位表、PNG 座位图、PDF 完整报告，开会汇报直接用。</p>
+    </div>
+  </div>
+</section>
 
-    <!-- Hero -->
-    <section class="hero">
-        <div class="hero-bg">
-            <div class="gradient-orb orb-1"></div>
-            <div class="gradient-orb orb-2"></div>
-            <div class="gradient-orb orb-3"></div>
-            <div class="hero-grid"></div>
+<!-- Comparison — Narrative -->
+<section class="section" id="comparison" data-od-id="comparison">
+  <div class="reveal">
+    <div class="section-label">效果对比</div>
+    <h2 class="section-title">你的排座方式，该升级了</h2>
+    <p class="section-desc">传统排座靠经验和直觉，AI 排座靠数据和算法。</p>
+  </div>
+  <div class="comparison-container reveal">
+    <!-- Before -->
+    <div class="comp-side comp-before">
+      <div class="comp-tag">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        手动排座
+      </div>
+      <h3>凭经验，难兼顾</h3>
+      <div class="comp-story">
+        <strong>"小明和小红坐一起就讲话，换了好几次还是不行。"</strong><br>
+        —— 某初三班主任，每学期花 3 小时排座
+      </div>
+      <div class="seat-grid-5x4" role="grid" aria-label="手动排座座位表">
+        <div class="seat-cell s-before" role="gridcell">明</div>
+        <div class="seat-cell s-before" role="gridcell">红</div>
+        <div class="seat-cell s-before" role="gridcell">华</div>
+        <div class="seat-cell s-before" role="gridcell">李</div>
+        <div class="seat-cell s-before" role="gridcell">王</div>
+        <div class="seat-cell s-before" role="gridcell">张</div>
+        <div class="seat-cell s-before" role="gridcell">陈</div>
+        <div class="seat-cell s-before" role="gridcell">林</div>
+        <div class="seat-cell s-before" role="gridcell">黄</div>
+        <div class="seat-cell s-before" role="gridcell">周</div>
+        <div class="seat-cell s-before" role="gridcell">吴</div>
+        <div class="seat-cell s-before" role="gridcell">郑</div>
+        <div class="seat-cell s-before" role="gridcell">孙</div>
+        <div class="seat-cell s-before" role="gridcell">赵</div>
+        <div class="seat-cell s-before" role="gridcell">钱</div>
+        <div class="seat-cell s-before" role="gridcell">刘</div>
+        <div class="seat-cell s-before" role="gridcell">杨</div>
+        <div class="seat-cell s-before" role="gridcell">何</div>
+        <div class="seat-cell s-before" role="gridcell">罗</div>
+        <div class="seat-cell s-before" role="gridcell">马</div>
+      </div>
+      <div class="issue-list">
+        <div class="issue"><span class="issue-dot d-bad"></span>性格冲突看不见</div>
+        <div class="issue"><span class="issue-dot d-bad"></span>学习风格靠猜</div>
+        <div class="issue"><span class="issue-dot d-bad"></span>每次排座 2-3 小时</div>
+      </div>
+    </div>
+    <!-- After -->
+    <div class="comp-side comp-after">
+      <div class="comp-tag">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        AI 排座
+      </div>
+      <h3>数据驱动，全局最优</h3>
+      <div class="comp-story">
+        <strong>"导入学生名单，点一下，3 分钟就出了方案。比我自己排的科学多了。"</strong><br>
+        —— 使用 SeatWise 的教师
+      </div>
+      <div class="seat-grid-5x4" role="grid" aria-label="AI 排座座位表">
+        <div class="seat-cell s-after s-highlight" role="gridcell">明</div>
+        <div class="seat-cell s-after" role="gridcell">陈</div>
+        <div class="seat-cell s-after s-highlight" role="gridcell">华</div>
+        <div class="seat-cell s-after" role="gridcell">赵</div>
+        <div class="seat-cell s-after s-highlight" role="gridcell">王</div>
+        <div class="seat-cell s-after" role="gridcell">林</div>
+        <div class="seat-cell s-after s-highlight" role="gridcell">张</div>
+        <div class="seat-cell s-after" role="gridcell">吴</div>
+        <div class="seat-cell s-after s-highlight" role="gridcell">黄</div>
+        <div class="seat-cell s-after" role="gridcell">郑</div>
+        <div class="seat-cell s-after" role="gridcell">李</div>
+        <div class="seat-cell s-after s-highlight" role="gridcell">孙</div>
+        <div class="seat-cell s-after" role="gridcell">红</div>
+        <div class="seat-cell s-after s-highlight" role="gridcell">周</div>
+        <div class="seat-cell s-after" role="gridcell">钱</div>
+        <div class="seat-cell s-after" role="gridcell">刘</div>
+        <div class="seat-cell s-after s-highlight" role="gridcell">杨</div>
+        <div class="seat-cell s-after" role="gridcell">何</div>
+        <div class="seat-cell s-after" role="gridcell">罗</div>
+        <div class="seat-cell s-after s-highlight" role="gridcell">马</div>
+      </div>
+      <div class="issue-list">
+        <div class="issue"><span class="issue-dot d-good"></span>性格互补自动匹配</div>
+        <div class="issue"><span class="issue-dot d-good"></span>学习风格智能优化</div>
+        <div class="issue"><span class="issue-dot d-good"></span>一键生成，3 分钟搞定</div>
+      </div>
+      <div class="comp-metrics">
+        <div class="metric">
+          <div class="metric-val">35</div>
+          <div class="metric-lbl">分析维度</div>
         </div>
-        <div class="particles" id="particles"></div>
-        <div class="hero-content">
-            <div class="hero-badge">
-                <span class="pulse-dot"></span>
-                AI 原生开发 · 开源免费
-            </div>
-            <h1>
-                <span class="line">AI 驱动的</span>
-                <span class="line"><span class="gradient-text">智能排座系统</span></span>
-            </h1>
-            <p class="hero-desc">
-                基于学生性格测评与多维度画像，智能算法一键生成最优座位方案。<br>
-                让排座更科学，让教育更公平。
-            </p>
-            <div class="hero-buttons">
-                <a href="#deploy" class="btn btn-primary">🚀 立即部署</a>
-                <a href="https://github.com/Meet7th/SeatWise" class="btn btn-ghost" target="_blank">📖 查看源码</a>
-            </div>
-            <div class="hero-visual">
-                <div class="hero-visual-inner">
-                    <div class="visual-header">
-                        <div class="visual-dot red"></div>
-                        <div class="visual-dot yellow"></div>
-                        <div class="visual-dot green"></div>
-                        <span class="visual-title">教室座位预览</span>
-                    </div>
-                    <div class="classroom-preview" id="classroom"></div>
-                </div>
-            </div>
+        <div class="metric">
+          <div class="metric-val">3min</div>
+          <div class="metric-lbl">生成耗时</div>
         </div>
-    </section>
-
-    <!-- Stats -->
-    <section class="stats-section">
-        <div class="stats-grid">
-            <div class="stat-card reveal">
-                <div class="stat-value" data-count="35">0</div>
-                <div class="stat-label">测评维度</div>
-            </div>
-            <div class="stat-card reveal reveal-delay-1">
-                <div class="stat-value" data-count="6">0</div>
-                <div class="stat-label">核心功能模块</div>
-            </div>
-            <div class="stat-card reveal reveal-delay-2">
-                <div class="stat-value" data-count="3">0</div>
-                <div class="stat-label">数据库支持</div>
-            </div>
-            <div class="stat-card reveal reveal-delay-3">
-                <div class="stat-value" data-text="MIT">MIT</div>
-                <div class="stat-label">开源协议</div>
-            </div>
+        <div class="metric">
+          <div class="metric-val">0</div>
+          <div class="metric-lbl">编程门槛</div>
         </div>
-    </section>
+      </div>
+    </div>
+  </div>
+</section>
 
-    <!-- Features -->
-    <section class="section" id="features">
-        <div class="section-header reveal">
-            <div class="section-tag">✦ 核心功能</div>
-            <h2 class="section-title">为教育场景深度设计</h2>
-            <p class="section-desc">从性格测评到智能排座，覆盖教室座位管理全流程</p>
-        </div>
-        <div class="features-grid">
-            <div class="feature-card reveal">
-                <div class="feature-icon purple">🧠</div>
-                <h3>AI 智能排座</h3>
-                <p>概率引擎综合考虑性格互补、学习风格、社交偏好等多维度因素，一键生成最优座位方案。</p>
-            </div>
-            <div class="feature-card reveal reveal-delay-1">
-                <div class="feature-icon cyan">📊</div>
-                <h3>性格测评系统</h3>
-                <p>35 道科学测评题，覆盖 MBTI、学习风格、社交类型、兴趣爱好、特殊需求等维度。</p>
-            </div>
-            <div class="feature-card reveal reveal-delay-2">
-                <div class="feature-icon green">🎨</div>
-                <h3>可视化排座</h3>
-                <p>拖拽手动调整、热力图分析、撤销重做，所见即所得的座位编辑体验。</p>
-            </div>
-            <div class="feature-card reveal reveal-delay-1">
-                <div class="feature-icon orange">🔄</div>
-                <h3>申诉管理</h3>
-                <p>学生提交换座申请，AI 自动分析合理性并给出建议，教师一键审批处理。</p>
-            </div>
-            <div class="feature-card reveal reveal-delay-2">
-                <div class="feature-icon pink">📤</div>
-                <h3>数据导出</h3>
-                <p>支持 CSV 表格、PNG 截图、PDF 报告等多种格式导出，方便存档和分享。</p>
-            </div>
-            <div class="feature-card reveal reveal-delay-3">
-                <div class="feature-icon blue">🔒</div>
-                <h3>安全可靠</h3>
-                <p>JWT 认证、bcrypt 加密、本地部署离线运行，保障学生数据隐私安全。</p>
-            </div>
-        </div>
-    </section>
+<!-- Workflow — Timeline -->
+<section class="section" id="workflow" data-od-id="workflow">
+  <div class="reveal">
+    <h2 class="section-title">四步，从零到排好</h2>
+    <p class="section-desc">不需要安装任何东西，浏览器打开就能用。</p>
+  </div>
+  <div class="workflow-timeline">
+    <div class="wf-step reveal" data-od-id="step-1">
+      <div class="wf-num">1</div>
+      <h4>创建班级</h4>
+      <p>输入班级信息<br>配置教室布局</p>
+    </div>
+    <div class="wf-step reveal" data-od-id="step-2">
+      <div class="wf-num">2</div>
+      <h4>学生测评</h4>
+      <p>扫码作答 35 题<br>约 15 分钟</p>
+    </div>
+    <div class="wf-step reveal" data-od-id="step-3">
+      <div class="wf-num">3</div>
+      <h4>AI 排座</h4>
+      <p>一键生成方案<br>热力图预览</p>
+    </div>
+    <div class="wf-step reveal" data-od-id="step-4">
+      <div class="wf-num">4</div>
+      <h4>发布微调</h4>
+      <p>拖拽微调<br>学生可申诉</p>
+    </div>
+  </div>
+</section>
 
-    <!-- Workflow -->
-    <section class="section" id="workflow">
-        <div class="section-header reveal">
-            <div class="section-tag">✦ 使用流程</div>
-            <h2 class="section-title">四步完成智能排座</h2>
-            <p class="section-desc">简洁高效的工作流程，轻松管理教室座位</p>
-        </div>
-        <div class="steps-container">
-            <div class="steps-line">
-                <div class="steps-line-fill" id="stepsLine"></div>
-            </div>
-            <div class="steps">
-                <div class="step reveal">
-                    <div class="step-icon">
-                        🏫
-                        <div class="step-num">1</div>
-                    </div>
-                    <h3>创建班级</h3>
-                    <p>教师创建班级，配置教室布局，生成邀请码</p>
-                </div>
-                <div class="step reveal reveal-delay-1">
-                    <div class="step-icon">
-                        📝
-                        <div class="step-num">2</div>
-                    </div>
-                    <h3>学生测评</h3>
-                    <p>学生用邀请码注册，完成 35 道性格测评题</p>
-                </div>
-                <div class="step reveal reveal-delay-2">
-                    <div class="step-icon">
-                        🤖
-                        <div class="step-num">3</div>
-                    </div>
-                    <h3>AI 排座</h3>
-                    <p>系统基于测评数据，AI 一键生成最优座位方案</p>
-                </div>
-                <div class="step reveal reveal-delay-3">
-                    <div class="step-icon">
-                        ✅
-                        <div class="step-num">4</div>
-                    </div>
-                    <h3>发布调整</h3>
-                    <p>教师审核发布，学生可提交申诉，灵活调整</p>
-                </div>
-            </div>
-        </div>
-    </section>
+<!-- FAQ -->
+<section class="section" id="faq" data-od-id="faq">
+  <div class="reveal">
+    <h2 class="section-title">你可能想问</h2>
+  </div>
+  <div class="faq-list" data-od-id="faq-list">
+    <div class="faq-item reveal" data-od-id="faq-1">
+      <button class="faq-question">
+        不懂技术能用吗？
+        <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">完全不需要编程基础。本地部署双击即可启动；云部署按文档操作 3 分钟搞定。界面就是普通的网页表单。</div></div>
+    </div>
+    <div class="faq-item reveal" data-od-id="faq-2">
+      <button class="faq-question">
+        学生数据安全吗？
+        <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">本地部署数据完全在你的设备上，不经过任何第三方。云部署使用 Supabase 加密存储，数据不会发送给 AI 服务商。</div></div>
+    </div>
+    <div class="faq-item reveal" data-od-id="faq-3">
+      <button class="faq-question">
+        没网能用吗？
+        <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">本地部署完全支持离线使用，所有功能无需联网。云部署需要网络连接。</div></div>
+    </div>
+    <div class="faq-item reveal" data-od-id="faq-4">
+      <button class="faq-question">
+        能导入现有学生数据吗？
+        <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">支持。可以批量导入学生名单，已有测评结果也可以直接导入。系统会自动匹配和更新画像。</div></div>
+    </div>
+    <div class="faq-item reveal" data-od-id="faq-5">
+      <button class="faq-question">
+        排座结果能导出吗？
+        <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">支持 CSV 座位表、PNG 座位图、PDF 完整报告三种格式导出，满足存档、汇报、张贴等不同场景。</div></div>
+    </div>
+  </div>
+</section>
 
-    <!-- AI Banner -->
-    <section class="section ai-section">
-        <div class="ai-card reveal">
-            <div class="ai-icon">🤖</div>
-            <h2>AI 原生开发项目</h2>
-            <p>本项目由 AI（Claude）全程开发与维护，从架构设计、代码编写到测试调试，代表了一种全新的软件开发范式 —— 人类提需求，AI 写代码。</p>
-            <div class="ai-badges">
-                <div class="ai-badge">🧠 Claude Code</div>
-                <div class="ai-badge">📝 AI 编码</div>
-                <div class="ai-badge">🔍 AI 审查</div>
-                <div class="ai-badge">🚀 AI 迭代</div>
-            </div>
-        </div>
-    </section>
+<!-- CTA -->
+<section class="cta" data-od-id="cta">
+  <div class="cta-inner reveal">
+    <h2>别再手动排座了</h2>
+    <p>免费开源，3 分钟部署。<br>把时间花在教学上，不是排座上。</p>
+    <div class="cta-buttons">
+      <a href="https://github.com/Meet7th/SeatWise" target="_blank" class="btn-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        去 GitHub 看看
+      </a>
+      <a href="#features" class="btn-secondary">先了解功能</a>
+    </div>
+  </div>
+</section>
 
-    <!-- Deploy -->
-    <section class="section" id="deploy">
-        <div class="section-header reveal">
-            <div class="section-tag">✦ 快速部署</div>
-            <h2 class="section-title">选择适合你的部署方式</h2>
-            <p class="section-desc">从零基础到专业运维，总有一种方式适合你</p>
-        </div>
-        <div class="deploy-grid">
-            <div class="deploy-card featured reveal">
-                <div class="deploy-icon">▲</div>
-                <h3>Vercel + Supabase</h3>
-                <p class="desc">免费云部署，无需服务器，3 分钟上线</p>
-                <div class="deploy-tags">
-                    <span class="deploy-tag">免费</span>
-                    <span class="deploy-tag">云端</span>
-                    <span class="deploy-tag">零运维</span>
-                </div>
-                <a href="https://github.com/Meet7th/SeatWise#方式一vercel-一键部署推荐" class="btn btn-primary" target="_blank">开始部署 →</a>
-            </div>
-            <div class="deploy-card reveal reveal-delay-1">
-                <div class="deploy-icon">💻</div>
-                <h3>本地一键启动</h3>
-                <p class="desc">双击即用，无需任何配置，适合体验和开发</p>
-                <div class="deploy-tags">
-                    <span class="deploy-tag">零配置</span>
-                    <span class="deploy-tag">本地</span>
-                    <span class="deploy-tag">SQLite</span>
-                </div>
-                <a href="https://github.com/Meet7th/SeatWise#方式二本地一键启动" class="btn btn-ghost" target="_blank">查看教程 →</a>
-            </div>
-            <div class="deploy-card reveal reveal-delay-2">
-                <div class="deploy-icon">🐳</div>
-                <h3>Docker 部署</h3>
-                <p class="desc">容器化部署，适合有 Docker 经验的用户</p>
-                <div class="deploy-tags">
-                    <span class="deploy-tag">Docker</span>
-                    <span class="deploy-tag">容器化</span>
-                    <span class="deploy-tag">MySQL</span>
-                </div>
-                <a href="https://github.com/Meet7th/SeatWise#方式三docker-部署" class="btn btn-ghost" target="_blank">查看教程 →</a>
-            </div>
-        </div>
-    </section>
+</main>
 
-    <!-- Tech -->
-    <section class="section" id="tech">
-        <div class="section-header reveal">
-            <div class="section-tag">✦ 技术架构</div>
-            <h2 class="section-title">现代化技术栈</h2>
-            <p class="section-desc">采用业界主流技术，稳定可靠，易于维护</p>
-        </div>
-        <div class="tech-marquee">
-            <div class="tech-track">
-                <div class="tech-item"><span class="icon">💚</span><div class="info"><h4>Vue 3</h4><p>前端框架</p></div></div>
-                <div class="tech-item"><span class="icon">🔷</span><div class="info"><h4>TypeScript</h4><p>类型安全</p></div></div>
-                <div class="tech-item"><span class="icon">⚡</span><div class="info"><h4>Vite</h4><p>构建工具</p></div></div>
-                <div class="tech-item"><span class="icon">🎨</span><div class="info"><h4>Tailwind CSS</h4><p>样式框架</p></div></div>
-                <div class="tech-item"><span class="icon">🟢</span><div class="info"><h4>Express</h4><p>后端框架</p></div></div>
-                <div class="tech-item"><span class="icon">🔺</span><div class="info"><h4>Prisma</h4><p>ORM 框架</p></div></div>
-                <div class="tech-item"><span class="icon">🔐</span><div class="info"><h4>JWT</h4><p>身份认证</p></div></div>
-                <div class="tech-item"><span class="icon">🗄️</span><div class="info"><h4>多数据库</h4><p>MySQL/SQLite/PG</p></div></div>
-                <!-- Duplicate for seamless loop -->
-                <div class="tech-item"><span class="icon">💚</span><div class="info"><h4>Vue 3</h4><p>前端框架</p></div></div>
-                <div class="tech-item"><span class="icon">🔷</span><div class="info"><h4>TypeScript</h4><p>类型安全</p></div></div>
-                <div class="tech-item"><span class="icon">⚡</span><div class="info"><h4>Vite</h4><p>构建工具</p></div></div>
-                <div class="tech-item"><span class="icon">🎨</span><div class="info"><h4>Tailwind CSS</h4><p>样式框架</p></div></div>
-                <div class="tech-item"><span class="icon">🟢</span><div class="info"><h4>Express</h4><p>后端框架</p></div></div>
-                <div class="tech-item"><span class="icon">🔺</span><div class="info"><h4>Prisma</h4><p>ORM 框架</p></div></div>
-                <div class="tech-item"><span class="icon">🔐</span><div class="info"><h4>JWT</h4><p>身份认证</p></div></div>
-                <div class="tech-item"><span class="icon">🗄️</span><div class="info"><h4>多数据库</h4><p>MySQL/SQLite/PG</p></div></div>
-            </div>
-        </div>
-    </section>
+<!-- Footer -->
+<footer class="footer" data-od-id="footer">
+  <div>
+    <span style="font-weight:700;color:var(--fg-bright)">SeatWise</span> · MIT License · © 2025 Meet7th
+  </div>
+  <div class="footer-links" data-od-id="footer-links">
+    <a href="https://github.com/Meet7th/SeatWise" target="_blank">GitHub</a>
+    <a href="https://github.com/Meet7th/SeatWise/releases" target="_blank">Releases</a>
+    <a href="https://github.com/Meet7th/SeatWise/issues" target="_blank">Issues</a>
+    <a href="https://github.com/Meet7th/SeatWise/blob/main/LICENSE" target="_blank">License</a>
+  </div>
+</footer>
 
-    <!-- FAQ -->
-    <section class="section" id="faq">
-        <div class="section-header reveal">
-            <div class="section-tag">✦ 常见问题</div>
-            <h2 class="section-title">FAQ</h2>
-        </div>
-        <div class="faq-container">
-            <div class="faq-item active reveal">
-                <div class="faq-question">
-                    <span>需要会编程才能使用吗？</span>
-                    <div class="faq-arrow">↓</div>
-                </div>
-                <div class="faq-answer">
-                    <div class="faq-answer-inner">不需要。推荐使用 Vercel 一键部署按钮或本地 pnpm start，全程无需编写代码。</div>
-                </div>
-            </div>
-            <div class="faq-item reveal reveal-delay-1">
-                <div class="faq-question">
-                    <span>数据安全吗？</span>
-                    <div class="faq-arrow">↓</div>
-                </div>
-                <div class="faq-answer">
-                    <div class="faq-answer-inner">密码使用 bcrypt 加密存储，接口使用 JWT 认证，本地部署完全离线运行，保障数据安全。</div>
-                </div>
-            </div>
-            <div class="faq-item reveal reveal-delay-2">
-                <div class="faq-question">
-                    <span>可以离线使用吗？</span>
-                    <div class="faq-arrow">↓</div>
-                </div>
-                <div class="faq-answer">
-                    <div class="faq-answer-inner">可以。本地部署无需联网，OAuth 登录和短信验证功能除外。</div>
-                </div>
-            </div>
-            <div class="faq-item reveal reveal-delay-3">
-                <div class="faq-question">
-                    <span>支持哪些浏览器？</span>
-                    <div class="faq-arrow">↓</div>
-                </div>
-                <div class="faq-answer">
-                    <div class="faq-answer-inner">支持 Chrome、Edge、Firefox、Safari 等主流浏览器，以及移动端浏览器。</div>
-                </div>
-            </div>
-            <div class="faq-item reveal reveal-delay-4">
-                <div class="faq-question">
-                    <span>如何备份数据？</span>
-                    <div class="faq-arrow">↓</div>
-                </div>
-                <div class="faq-answer">
-                    <div class="faq-answer-inner">SQLite 备份 .db 文件即可；MySQL 使用 mysqldump；Docker 备份 docker-data/ 目录。</div>
-                </div>
-            </div>
-        </div>
-    </section>
+<script>
+(function(){
+  // Nav scroll
+  var nav = document.querySelector('.nav');
+  window.addEventListener('scroll', function(){
+    nav.classList.toggle('scrolled', window.scrollY > 50);
+  });
 
-    <!-- CTA -->
-    <section class="cta-section">
-        <h2 class="reveal">开始使用智座 SeatWise</h2>
-        <p class="reveal reveal-delay-1">免费开源，一键部署，让排座更科学</p>
-        <div class="hero-buttons reveal reveal-delay-2">
-            <a href="https://github.com/Meet7th/SeatWise" class="btn btn-primary" target="_blank">⭐ Star on GitHub</a>
-            <a href="#deploy" class="btn btn-ghost">🚀 立即部署</a>
-        </div>
-    </section>
+  // Reveal on scroll
+  var reveals = document.querySelectorAll('.reveal');
+  var revealObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add('visible'); revealObs.unobserve(e.target); }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+  reveals.forEach(function(el){ revealObs.observe(el); });
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-inner">
-            <div class="footer-left">
-                <a href="#" class="logo">
-                    <div class="logo-mark" style="width:32px;height:32px;font-size:18px;">🪑</div>
-                    <span class="logo-text">SeatWise</span>
-                </a>
-                <p>© 2026 SeatWise. Built with ❤️ by AI</p>
-            </div>
-            <div class="footer-links">
-                <a href="https://github.com/Meet7th/SeatWise" target="_blank">GitHub</a>
-                <a href="https://github.com/Meet7th/SeatWise/releases" target="_blank">Releases</a>
-                <a href="https://github.com/Meet7th/SeatWise/issues" target="_blank">Issues</a>
-                <a href="https://github.com/Meet7th/SeatWise/blob/main/LICENSE" target="_blank">MIT License</a>
-            </div>
-        </div>
-    </footer>
+  // Comparison seat animation
+  var compObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting) return;
+      var seats = e.target.querySelectorAll('.seat-cell');
+      seats.forEach(function(s, i){
+        s.style.opacity = '0';
+        s.style.transform = 'scale(0.5)';
+        setTimeout(function(){
+          s.style.transition = 'all .3s cubic-bezier(.16,1,.3,1)';
+          s.style.opacity = '1';
+          s.style.transform = 'scale(1)';
+        }, i * 30);
+      });
+      compObs.unobserve(e.target);
+    });
+  }, { threshold: 0.2 });
+  document.querySelectorAll('.seat-grid-5x4').forEach(function(g){ compObs.observe(g); });
 
-    <script>
-        // ===== Cursor Glow =====
-        const cursorGlow = document.getElementById('cursorGlow');
-        let mouseX = 0, mouseY = 0;
-        let glowX = 0, glowY = 0;
+  // Seat preview
+  var seatGrid = document.getElementById('seatPreview');
+  var names = ['小明','小红','小华','小李','小王','小张','小陈','小林','小黄','小周','小吴','小郑',
+               '小孙','小赵','小钱','小刘','小杨','小何','小罗','小马','小高','小谢','小韩','小唐'];
+  var highlights = [0,2,4,7,9,14,17,23];
+  for(var r = 0; r < 4; r++){
+    for(var c = 0; c < 6; c++){
+      var idx = r * 6 + c;
+      var seat = document.createElement('div');
+      seat.className = 'seat' + (highlights.indexOf(idx) !== -1 ? ' highlight' : '');
+      seat.textContent = names[idx] || '';
+      seat.setAttribute('role','gridcell');
+      seat.setAttribute('aria-label', '座位 ' + (r+1) + '排' + (c+1) + '列 ' + (names[idx]||'空'));
+      seat.setAttribute('tabindex','0');
+      seat.style.transitionDelay = (r * 0.06 + c * 0.04) + 's';
+      seatGrid.appendChild(seat);
+    }
+  }
+  var seatObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting) return;
+      e.target.querySelectorAll('.seat').forEach(function(s){ s.classList.add('visible'); });
+      seatObs.unobserve(e.target);
+    });
+  }, { threshold: 0.2 });
+  seatObs.observe(seatGrid);
 
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
+  // FAQ accordion
+  document.querySelectorAll('.faq-question').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var item = btn.parentElement;
+      var answer = item.querySelector('.faq-answer');
+      var isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(function(i){
+        i.classList.remove('open');
+        i.querySelector('.faq-answer').style.maxHeight = '0';
+      });
+      if(!isOpen){ item.classList.add('open'); answer.style.maxHeight = answer.scrollHeight + 'px'; }
+    });
+  });
 
-        function animateGlow() {
-            glowX += (mouseX - glowX) * 0.1;
-            glowY += (mouseY - glowY) * 0.1;
-            cursorGlow.style.left = glowX + 'px';
-            cursorGlow.style.top = glowY + 'px';
-            requestAnimationFrame(animateGlow);
-        }
-        animateGlow();
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(function(a){
+    a.addEventListener('click', function(e){
+      var id = a.getAttribute('href');
+      if(id === '#') return;
+      var target = document.querySelector(id);
+      if(target){ e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+  });
 
-        // ===== Nav Scroll =====
-        const nav = document.getElementById('nav');
-        window.addEventListener('scroll', () => {
-            nav.classList.toggle('scrolled', window.scrollY > 50);
-        });
+  // Mobile menu
+  var mobileBtn = document.querySelector('.nav-mobile-btn');
+  var navLinks = document.querySelector('.nav-links');
+  if(mobileBtn && navLinks){
+    mobileBtn.addEventListener('click', function(){
+      navLinks.classList.toggle('open');
+      var expanded = navLinks.classList.contains('open');
+      mobileBtn.setAttribute('aria-expanded', expanded);
+    });
+    // Close on link click
+    navLinks.querySelectorAll('a').forEach(function(link){
+      link.addEventListener('click', function(){
+        navLinks.classList.remove('open');
+        mobileBtn.setAttribute('aria-expanded','false');
+      });
+    });
+  }
+})();
 
-        // ===== Particles =====
-        const particlesContainer = document.getElementById('particles');
-        for (let i = 0; i < 30; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
-            particle.style.animationDelay = (Math.random() * 10) + 's';
-            particle.style.width = particle.style.height = (Math.random() * 3 + 2) + 'px';
-            particlesContainer.appendChild(particle);
-        }
-
-        // ===== Classroom Preview =====
-        const classroom = document.getElementById('classroom');
-        const seatPattern = [
-            0,0,1,1,1,1,0,0,
-            1,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,1,
-            0,1,1,1,1,1,1,0,
-        ];
-
-        // Teacher desk
-        const teacherSeat = document.createElement('div');
-        teacherSeat.className = 'seat teacher';
-        teacherSeat.textContent = '🎓 讲台';
-        classroom.appendChild(teacherSeat);
-
-        // Student seats with staggered animation
-        seatPattern.forEach((occupied, i) => {
-            const seat = document.createElement('div');
-            seat.className = `seat ${occupied ? 'occupied' : 'empty'}`;
-            if (occupied) {
-                seat.style.animationDelay = (i * 0.02) + 's';
-            }
-            classroom.appendChild(seat);
-        });
-
-        // Animate seats appearing
-        const seats = classroom.querySelectorAll('.seat.occupied');
-        seats.forEach((seat, i) => {
-            seat.style.opacity = '0';
-            seat.style.transform = 'scale(0.5)';
-            setTimeout(() => {
-                seat.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-                seat.style.opacity = '1';
-                seat.style.transform = 'scale(1)';
-            }, 1000 + i * 30);
-        });
-
-        // ===== Scroll Reveal =====
-        const revealElements = document.querySelectorAll('.reveal');
-        const revealObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-
-        revealElements.forEach(el => revealObserver.observe(el));
-
-        // ===== Steps Line Animation =====
-        const stepsLine = document.getElementById('stepsLine');
-        const stepsSection = document.querySelector('.steps-container');
-        const stepsObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    stepsLine.classList.add('animate');
-                }
-            });
-        }, { threshold: 0.3 });
-        stepsObserver.observe(stepsSection);
-
-        // ===== Counter Animation =====
-        const statValues = document.querySelectorAll('.stat-value[data-count]');
-        const counterObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const target = entry.target;
-                    const count = parseInt(target.dataset.count);
-                    let current = 0;
-                    const increment = count / 30;
-                    const timer = setInterval(() => {
-                        current += increment;
-                        if (current >= count) {
-                            target.textContent = count;
-                            clearInterval(timer);
-                        } else {
-                            target.textContent = Math.floor(current);
-                        }
-                    }, 40);
-                    counterObserver.unobserve(target);
-                }
-            });
-        }, { threshold: 0.5 });
-
-        statValues.forEach(el => counterObserver.observe(el));
-
-        // ===== FAQ Toggle =====
-        document.querySelectorAll('.faq-question').forEach(q => {
-            q.addEventListener('click', () => {
-                const item = q.parentElement;
-                const wasActive = item.classList.contains('active');
-                document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
-                if (!wasActive) item.classList.add('active');
-            });
-        });
-
-        // ===== Smooth Scroll =====
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        });
-
-        // ===== Seat Hover Effect =====
-        classroom.addEventListener('mousemove', (e) => {
-            const seats = classroom.querySelectorAll('.seat.occupied');
-            seats.forEach(seat => {
-                const rect = seat.getBoundingClientRect();
-                const x = e.clientX - rect.left - rect.width / 2;
-                const y = e.clientY - rect.top - rect.height / 2;
-                const distance = Math.sqrt(x * x + y * y);
-                if (distance < 100) {
-                    const intensity = 1 - distance / 100;
-                    seat.style.boxShadow = `0 0 ${intensity * 20}px rgba(99, 102, 241, ${intensity * 0.5})`;
-                } else {
-                    seat.style.boxShadow = '';
-                }
-            });
-        });
-    </script>
+function toggleDetail(el){
+  var detail = el.nextElementSibling;
+  var isOpen = detail.classList.contains('open');
+  detail.classList.toggle('open');
+  el.classList.toggle('open');
+}
+</script>
 </body>
 </html>

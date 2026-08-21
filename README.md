@@ -108,13 +108,36 @@
 
 ## 🚀 快速开始
 
-### 方式一：Vercel 一键部署（推荐）
+### 方式一：一键云端部署（推荐）
 
-> 🟢 免费 · 无需服务器 · 3 分钟完成
+> 🟢 免费 · 全自动 · 只需粘贴一个数据库地址
 
-**第 1 步：获取数据库**
+只需安装 [Node.js](https://nodejs.org/)（≥ 18），一行命令完成全部部署：
 
-前往 [Supabase](https://supabase.com/new) 创建免费项目，获取 PostgreSQL 连接字符串。
+**Windows：**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Meet7th/SeatWise/main/deploy.bat -o deploy.bat && deploy.bat
+```
+
+**Mac / Linux：**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Meet7th/SeatWise/main/deploy.sh | bash
+```
+
+脚本会自动完成以下全部操作：
+
+| 步骤 | 操作 | 状态 |
+|------|------|------|
+| 1 | 安装 pnpm 和 Vercel CLI | 🤖 自动 |
+| 2 | 登录 Vercel（浏览器弹窗） | 👤 一次 |
+| 3 | 引导创建 Supabase 数据库 | 👤 粘贴地址 |
+| 4 | 生成 JWT 安全密钥 | 🤖 自动 |
+| 5 | 初始化数据库表和测试数据 | 🤖 自动 |
+| 6 | 部署后端 API 到 Vercel | 🤖 自动 |
+| 7 | 部署前端到 Vercel | 🤖 自动 |
+| 8 | 关联前后端地址 | 🤖 自动 |
 
 <details>
 <summary>📋 如何获取 Supabase 数据库连接字符串？</summary>
@@ -127,37 +150,6 @@
 6. 复制连接字符串，将 `[YOUR-PASSWORD]` 替换为你设置的密码
 
 </details>
-
-**第 2 步：部署后端 API**
-
-[![Deploy Backend to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise&root-directory=apps%2Fserver&env=DATABASE_URL%2CJWT_SECRET%2CJWT_REFRESH_SECRET&envDescription=Supabase%20PostgreSQL%20%E8%BF%9E%E6%8E%A5%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%92%8C%20JWT%20%E5%AF%86%E9%92%A5&envLink=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise%2Fblob%2Fmain%2F.env.example&project-name=seatwise-api&repository-name=SeatWise-API)
-
-| 变量名 | 值 | 说明 |
-|--------|-----|------|
-| `DATABASE_URL` | `postgresql://...` | Supabase 连接字符串 |
-| `JWT_SECRET` | 随机字符串（≥32字符） | [在线生成](https://randomkeygen.com/) |
-| `JWT_REFRESH_SECRET` | 另一个随机字符串 | 与上面不同 |
-
-**第 3 步：部署前端**
-
-[![Deploy Frontend to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise&root-directory=apps%2Fweb&env=VITE_API_BASE_URL&envDescription=%E5%90%8E%E7%AB%AF%20API%20%E5%9C%B0%E5%9D%80&envLink=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise%2Fblob%2Fmain%2F.env.example&project-name=seatwise&repository-name=SeatWise)
-
-| 变量名 | 值 |
-|--------|-----|
-| `VITE_API_BASE_URL` | `https://第2步的后端地址/api` |
-
-**第 4 步：初始化数据库**
-
-```bash
-git clone https://github.com/Meet7th/SeatWise.git
-cd SeatWise
-pnpm install
-cd apps/server
-cp prisma/schema.postgres.prisma prisma/schema.prisma
-# 创建 .env 文件，填入 DATABASE_URL
-npx prisma db push
-npx prisma db seed
-```
 
 ---
 
@@ -190,6 +182,48 @@ docker-compose up -d
 ```
 
 访问：前端 `http://localhost:5173` · 后端 `http://localhost:3000`
+
+---
+
+### 方式四：Vercel 手动部署
+
+> 适合需要自定义配置的用户
+
+<details>
+<summary>展开查看手动部署步骤</summary>
+
+**第 1 步：部署后端 API**
+
+[![Deploy Backend to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise&root-directory=apps%2Fserver&env=DATABASE_URL%2CJWT_SECRET%2CJWT_REFRESH_SECRET&envDescription=Supabase%20PostgreSQL%20%E8%BF%9E%E6%8E%A5%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%92%8C%20JWT%20%E5%AF%86%E9%92%A5&envLink=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise%2Fblob%2Fmain%2F.env.example&project-name=seatwise-api&repository-name=SeatWise-API)
+
+| 变量名 | 值 | 说明 |
+|--------|-----|------|
+| `DATABASE_URL` | `postgresql://...` | Supabase 连接字符串 |
+| `JWT_SECRET` | 随机字符串（≥32字符） | [在线生成](https://randomkeygen.com/) |
+| `JWT_REFRESH_SECRET` | 另一个随机字符串 | 与上面不同 |
+
+**第 2 步：部署前端**
+
+[![Deploy Frontend to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise&root-directory=apps%2Fweb&env=VITE_API_BASE_URL&envDescription=%E5%90%8E%E7%AB%AF%20API%20%E5%9C%B0%E5%9D%80&envLink=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise%2Fblob%2Fmain%2F.env.example&project-name=seatwise&repository-name=SeatWise)
+
+| 变量名 | 值 |
+|--------|-----|
+| `VITE_API_BASE_URL` | `https://第1步的后端地址/api` |
+
+**第 3 步：初始化数据库**
+
+```bash
+git clone https://github.com/Meet7th/SeatWise.git
+cd SeatWise
+pnpm install
+cd apps/server
+cp prisma/schema.postgres.prisma prisma/schema.prisma
+# 创建 .env 文件，填入 DATABASE_URL
+npx prisma db push
+npx prisma db seed
+```
+
+</details>
 
 ---
 
