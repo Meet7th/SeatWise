@@ -5,6 +5,7 @@
   "description": "AI 智能排座系统 - 基于学生性格测评与多维度画像的教室座位编排系统",
   "author": "Meet7th",
   "license": "MIT",
+  "packageManager": "pnpm@9.15.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/Meet7th/SeatWise.git"
