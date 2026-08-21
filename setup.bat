@@ -77,21 +77,38 @@ echo   本脚本需要 3 个 Token 来自动完成部署：
 echo.
 echo   Token 1: Supabase Access Token
 echo     用途: 自动创建数据库项目
-echo     获取: 打开 https://supabase.com/dashboard/account/tokens
-echo     点击 Generate new token，复制生成的 Token
+echo     获取步骤:
+echo       1. 打开 https://supabase.com，用 GitHub 登录
+echo       2. 点击左下角头像 → Account Settings
+echo       3. 点击左侧 Access Tokens
+echo       4. 点击 Generate new token
+echo       5. 输入名称如 seatwise-deploy
+echo       6. 点击 Generate token，复制 Token
 echo.
 echo   Token 2: Vercel Access Token
 echo     用途: 自动部署前端和后端
-echo     获取: 打开 https://vercel.com/account/tokens
-echo     点击 Create，输入名称，复制生成的 Token
+echo     获取步骤:
+echo       1. 打开 https://vercel.com，用 GitHub 登录
+echo       2. 点击右上角头像 → Settings
+echo       3. 点击左侧 Tokens
+echo       4. 点击 Create
+echo       5. 输入名称如 seatwise-deploy
+echo       6. 点击 Create Token，复制 Token
 echo.
 echo   Token 3: GitHub Personal Access Token
 echo     用途: 自动 Fork 仓库到你的账号
-echo     获取: 打开 https://github.com/settings/tokens?type=beta
-echo     点击 Generate new token
-echo     权限选择: Contents (Read and write)
-echo     复制生成的 Token
+echo     获取步骤:
+echo       1. 打开 https://github.com，登录账号
+echo       2. 点击右上角头像 → Settings
+echo       3. 滚动到底部 → Developer settings
+echo       4. 点击 Personal access tokens → Fine-grained tokens
+echo       5. 点击 Generate new token
+echo       6. 输入名称如 seatwise-deploy
+echo       7. Repository access 选择 All repositories
+echo       8. Permissions 找到 Contents，选择 Read and write
+echo       9. 点击 Generate token，复制 Token
 echo.
+echo   ⚠ Token 只会显示一次，请立即复制保存！
 echo   提示: Token 只在本次部署中使用，不会被存储
 echo.
 
