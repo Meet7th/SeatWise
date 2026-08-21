@@ -1,0 +1,11 @@
+{
+  "name": "seatwise",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @seatwise/web dev",
+    "dev:server": "pnpm --filter @seatwise/server dev",
+    "build": "pnpm --filter @seatwise/web build && pnpm --filter @seatwise/server build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  }
+}
