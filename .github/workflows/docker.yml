@@ -8,7 +8,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/seatwise
 
 permissions:
   contents: read
@@ -36,6 +35,10 @@ jobs:
         id: version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      - name: Get lowercase owner name
+        id: owner
+        run: echo "name=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Build and push frontend image
         uses: docker/build-push-action@v6
         with:
@@ -43,8 +46,8 @@ jobs:
           file: Dockerfile.frontend
           push: true
           tags: |
-            ${{ env.IMAGE_PREFIX }}-web:latest
-            ${{ env.IMAGE_PREFIX }}-web:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/seatwise-web:latest
+            ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/seatwise-web:${{ steps.version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -69,6 +72,10 @@ jobs:
         id: version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      - name: Get lowercase owner name
+        id: owner
+        run: echo "name=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Build and push backend image
         uses: docker/build-push-action@v6
         with:
@@ -76,7 +83,7 @@ jobs:
           file: Dockerfile.backend
           push: true
           tags: |
-            ${{ env.IMAGE_PREFIX }}-server:latest
-            ${{ env.IMAGE_PREFIX }}-server:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/seatwise-server:latest
+            ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/seatwise-server:${{ steps.version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
