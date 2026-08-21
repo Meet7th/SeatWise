@@ -11,3 +11,8 @@ coverage
 # SQLite 数据库
 *.db
 *.db-journal
+
+# TypeScript 编译输出
+*.js.map
+apps/web/src/**/*.js
+packages/shared/types/**/*.js
