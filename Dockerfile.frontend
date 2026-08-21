@@ -11,6 +11,9 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/web/package.json ./apps/web/
 
+# Allow pnpm build scripts for native dependencies
+RUN echo "onlyBuiltDependencies=*" > .npmrc
+
 # Install dependencies
 RUN pnpm install
 
