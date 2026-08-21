@@ -5,7 +5,7 @@ import { env } from '../config/env';
 const codeStore = new Map<string, { code: string; expiresAt: number }>();
 
 function generateCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return crypto.randomInt(100000, 1000000).toString();
 }
 
 function getRedis(): any {
@@ -34,9 +34,10 @@ export class SmsService {
       }
     }
 
-    // Dev mode: log code to console
-    console.log(`[SMS Dev] Phone: ${phone}, Code: ${code}`);
-    return { success: true, message: `验证码已发送 (开发模式: ${code})` };
+    // Dev mode: log masked phone to console
+    const maskedPhone = phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+    console.log(`[SMS Dev] Phone: ${maskedPhone}, Code: ${code}`);
+    return { success: true, message: '验证码已发送' };
   }
 
   /**

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import crypto from 'crypto';
 import { prisma } from '@/config/database';
 import { authMiddleware, AuthRequest } from '@/middleware/auth';
 import { isTeacher } from '@/middleware/rbac';
@@ -9,9 +10,10 @@ const router = Router();
 
 function generateInviteCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = crypto.randomBytes(6);
   let code = '';
   for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
+    code += chars[bytes[i] % chars.length];
   }
   return code;
 }
@@ -72,6 +74,21 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res, next) => {
     if (!classroom) {
       return res.status(404).json({ code: 40400, data: null, message: '班级不存在' });
     }
+
+    // 权限校验：仅班主任、任课教师或班级学生可查看
+    const userId = req.user!.sub;
+    const isHomeroom = classroom.homeroomTeacherId === userId;
+    const isTeaching = await prisma.classroom.findFirst({
+      where: { id: req.params.id, teachers: { some: { id: userId } } },
+    });
+    const isMember = await prisma.classStudent.findUnique({
+      where: { classId_studentId: { classId: req.params.id, studentId: userId } },
+    });
+
+    if (!isHomeroom && !isTeaching && !isMember) {
+      return res.status(403).json({ code: 40300, data: null, message: '无权访问该班级' });
+    }
+
     res.json({ code: 0, data: classroom, message: 'ok' });
   } catch (err) {
     next(err);
@@ -80,6 +97,22 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res, next) => {
 
 router.post('/:id/invite', authMiddleware, isTeacher, async (req: AuthRequest, res, next) => {
   try {
+    // 权限校验：仅班主任或任课教师可重置邀请码
+    const classroom = await prisma.classroom.findUnique({ where: { id: req.params.id } });
+    if (!classroom) {
+      return res.status(404).json({ code: 40400, data: null, message: '班级不存在' });
+    }
+
+    const userId = req.user!.sub;
+    const isHomeroom = classroom.homeroomTeacherId === userId;
+    const isTeaching = await prisma.classroom.findFirst({
+      where: { id: req.params.id, teachers: { some: { id: userId } } },
+    });
+
+    if (!isHomeroom && !isTeaching) {
+      return res.status(403).json({ code: 40300, data: null, message: '无权操作该班级' });
+    }
+
     const { expiresInDays = 30 } = req.body;
     const code = generateInviteCode();
     const expiresAt = new Date();
@@ -137,7 +170,7 @@ router.get('/:id/students', authMiddleware, isTeacher, async (req: AuthRequest, 
 
     const where = {
       classId: req.params.id,
-      ...(search ? { student: { name: { contains: search as string } } } : {}),
+      ...(search ? { student: { name: { contains: (search as string).slice(0, 50) } } } : {}),
     };
 
     const [items, total] = await Promise.all([

@@ -109,8 +109,25 @@ const form = reactive({
 async function handleRegister() {
   error.value = '';
 
+  // 客户端输入验证
   if (!form.phone && !form.email) {
     error.value = '请输入手机号或邮箱';
+    return;
+  }
+  if (form.phone && !/^1[3-9]\d{9}$/.test(form.phone)) {
+    error.value = '手机号格式不正确';
+    return;
+  }
+  if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+    error.value = '邮箱格式不正确';
+    return;
+  }
+  if (form.name.length < 2 || form.name.length > 50) {
+    error.value = '姓名需2-50个字符';
+    return;
+  }
+  if (form.inviteCode.length !== 6) {
+    error.value = '邀请码需为6位';
     return;
   }
   if (form.password !== form.confirmPassword) {

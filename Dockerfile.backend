@@ -11,8 +11,8 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/server/package.json ./apps/server/
 
-# Allow pnpm build scripts for native dependencies
-RUN echo "onlyBuiltDependencies=*" > .npmrc
+# Allow pnpm build scripts and hoist dependencies for Docker
+RUN echo -e "onlyBuiltDependencies=*\nshamefully-hoist=true" > .npmrc
 
 # Install dependencies
 RUN pnpm install
@@ -21,28 +21,27 @@ RUN pnpm install
 COPY packages/shared/ ./packages/shared/
 COPY apps/server/ ./apps/server/
 
-# Build backend (shared package is TS-only, no build needed)
+# Remove any local node_modules that may have been copied
+RUN rm -rf apps/server/node_modules apps/web/node_modules packages/shared/node_modules
+
+# Build backend
 RUN pnpm --filter @seatwise/server build
 
 # Generate Prisma client
-RUN cd apps/server && npx prisma generate
+RUN cd apps/server && npx prisma generate --schema=./prisma/schema.prisma
 
 # Stage 2: Run
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@9 --activate
-
 # Copy built files
 COPY --from=builder /app/packages/shared ./packages/shared
 COPY --from=builder /app/apps/server/dist ./apps/server/dist
-COPY --from=builder /app/apps/server/node_modules ./apps/server/node_modules
 COPY --from=builder /app/apps/server/prisma ./apps/server/prisma
 COPY --from=builder /app/apps/server/package.json ./apps/server/
-COPY --from=builder /app/node_modules/.pnpm ./node_modules/.pnpm
-COPY --from=builder /app/pnpm-lock.yaml ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/server/node_modules ./apps/server/node_modules
 
 WORKDIR /app/apps/server
 

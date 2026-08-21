@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { apiLimiter } from '@/middleware/rateLimit';
 import { errorHandler } from '@/middleware/errorHandler';
+import { env } from '@/config/env';
 import authRoutes from '@/routes/auth';
 import oauthRoutes from '@/routes/oauth';
 import classroomRoutes from '@/routes/classroom';
@@ -14,7 +15,21 @@ import notificationRoutes from '@/routes/notification';
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: true, credentials: true }));
+
+// CORS 白名单：仅允许配置的前端域名
+const allowedOrigins = env.FRONTEND_URL.split(',').map(o => o.trim());
+app.use(cors({
+  origin: (origin, callback) => {
+    // 允许无 origin 的请求（如 server-to-server、Postman）
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS 策略拒绝该来源'));
+    }
+  },
+  credentials: true,
+}));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(apiLimiter);
 

@@ -43,7 +43,16 @@ router.get('/:classId', authMiddleware, isTeacher, async (req: AuthRequest, res,
 
     const appeals = await prisma.appeal.findMany({
       where,
-      include: { student: true },
+      include: {
+        student: {
+          select: {
+            id: true,
+            name: true,
+            studentNumber: true,
+            avatar: true,
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
 

@@ -1,6 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
+// 生产环境禁止执行种子脚本
+if (process.env.NODE_ENV === 'production') {
+  console.error('❌ 种子脚本不允许在生产环境执行');
+  process.exit(1);
+}
+
 const prisma = new PrismaClient();
 
 async function main() {

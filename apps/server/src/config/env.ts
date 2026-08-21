@@ -1,12 +1,23 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+// 启动时校验关键密钥
+const jwtSecret = process.env.JWT_SECRET;
+const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
+
+if (!jwtSecret || jwtSecret.length < 16) {
+  throw new Error('环境变量 JWT_SECRET 未设置或长度不足16位，请在 .env 文件中配置');
+}
+if (!jwtRefreshSecret || jwtRefreshSecret.length < 16) {
+  throw new Error('环境变量 JWT_REFRESH_SECRET 未设置或长度不足16位，请在 .env 文件中配置');
+}
+
 export const env = {
   PORT: parseInt(process.env.PORT || '3000', 10),
   DATABASE_URL: process.env.DATABASE_URL || '',
   REDIS_URL: process.env.REDIS_URL || 'redis://localhost:6379',
-  JWT_SECRET: process.env.JWT_SECRET || 'dev-jwt-secret',
-  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret',
+  JWT_SECRET: jwtSecret,
+  JWT_REFRESH_SECRET: jwtRefreshSecret,
   JWT_EXPIRES_IN: '7d',
   JWT_REFRESH_EXPIRES_IN: '30d',
 

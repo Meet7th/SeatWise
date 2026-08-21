@@ -86,13 +86,16 @@ const form = reactive({
 });
 
 // Handle OAuth callback
-onMounted(() => {
-  const { wechat, qq, openId, name, error: authError } = route.query;
+onMounted(async () => {
+  const { wechat, qq, code, error: authError } = route.query;
   if (authError) {
     error.value = '第三方登录失败，请重试';
-  } else if ((wechat || qq) && openId) {
-    // TODO: Handle OAuth login with backend
-    console.log('OAuth callback:', { provider: wechat ? 'wechat' : 'qq', openId, name });
+  } else if ((wechat || qq) && code) {
+    // 使用一次性 code 换取用户信息（不在 URL 中暴露 openId）
+    if (import.meta.env.DEV) {
+      console.log('OAuth callback:', { provider: wechat ? 'wechat' : 'qq' });
+    }
+    // TODO: 调用后端 exchange 接口获取用户信息并完成登录
   }
 });
 

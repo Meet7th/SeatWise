@@ -5,7 +5,7 @@ import { env } from '../config/env';
 const codeStore = new Map<string, { code: string; expiresAt: number }>();
 
 function generateCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return crypto.randomInt(100000, 1000000).toString();
 }
 
 function getTransporter() {
@@ -39,9 +39,10 @@ export class EmailService {
       }
     }
 
-    // Dev mode
-    console.log(`[Email Dev] Email: ${email}, Code: ${code}`);
-    return { success: true, message: `验证邮件已发送 (开发模式: ${code})` };
+    // Dev mode: log masked email to console
+    const maskedEmail = email.replace(/(.{2}).+(@.+)/, '$1***$2');
+    console.log(`[Email Dev] Email: ${maskedEmail}, Code: ${code}`);
+    return { success: true, message: '验证邮件已发送' };
   }
 
   /**

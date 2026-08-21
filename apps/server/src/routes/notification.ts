@@ -45,6 +45,13 @@ router.get('/unread-count', authMiddleware, async (req: AuthRequest, res, next) 
 // Mark as read
 router.put('/:id/read', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
+    const notification = await prisma.notification.findFirst({
+      where: { id: req.params.id, recipientId: req.user!.sub },
+    });
+    if (!notification) {
+      return res.status(404).json({ code: 40400, data: null, message: '通知不存在' });
+    }
+
     await prisma.notification.update({
       where: { id: req.params.id },
       data: { read: true, readAt: new Date() },

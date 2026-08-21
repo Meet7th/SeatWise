@@ -158,7 +158,7 @@ watch(answers, () => {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     emit('save', { ...answers.value });
-    localStorage.setItem(`quiz_${props.classId}`, JSON.stringify(answers.value));
+    localStorage.setItem(`seatwise_quiz_${props.classId}`, JSON.stringify(answers.value));
   }, 3000);
 }, { deep: true });
 
@@ -168,7 +168,7 @@ onMounted(() => {
     answers.value = { ...props.initialAnswers };
   } else {
     try {
-      const saved = localStorage.getItem(`quiz_${props.classId}`);
+      const saved = localStorage.getItem(`seatwise_quiz_${props.classId}`);
       if (saved) {
         answers.value = JSON.parse(saved);
       }

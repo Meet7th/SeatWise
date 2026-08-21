@@ -42,7 +42,7 @@ router.post('/login', authLimiter, validate(loginSchema), async (req, res, next)
   }
 });
 
-router.post('/refresh', async (req, res, next) => {
+router.post('/refresh', authLimiter, async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
     if (!refreshToken) {
