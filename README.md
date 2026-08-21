@@ -108,54 +108,133 @@
 
 ## 🚀 快速开始
 
-### 方式一：一键云端部署（推荐）
+### 方式一：Vercel 一键部署（推荐）
 
-> 🟢 免费 · 全自动 · 只需粘贴一个数据库地址
+> 🟢 免费 · 无需服务器 · 点击按钮即部署
 
-只需安装 [Node.js](https://nodejs.org/)（≥ 18），一行命令完成全部部署：
+#### 第 1 步：创建 Supabase 数据库（约 2 分钟）
 
-**Windows：**
+1. 打开 [Supabase](https://supabase.com/new)，用 GitHub 账号登录
+2. 点击 **New Project**，填写以下信息：
+   - **Organization**：选择默认或创建新的
+   - **Project Name**：任意，如 `seatwise-db`
+   - **Database Password**：设置一个密码（请牢记）
+   - **Region**：选择 `Southeast Asia (Singapore)` 或 `Northeast Asia (Tokyo)`
+3. 点击 **Create new project**，等待 1-2 分钟创建完成
+4. 进入左侧 **Settings** → **Database**
+5. 找到 **Connection string** 区域，点击 **URI** 标签
+6. 复制连接字符串，将 `[YOUR-PASSWORD]` 替换为你刚才设置的密码
+
+> 连接字符串格式：`postgresql://postgres.xxxxx:你的密码@aws-0-xxx.pooler.supabase.com:6532/postgres`
+
+#### 第 2 步：部署后端 API（约 1 分钟）
+
+点击下方按钮，填入环境变量：
+
+[![Deploy Backend to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise&root-directory=apps%2Fserver&env=DATABASE_URL%2CJWT_SECRET%2CJWT_REFRESH_SECRET&envDescription=Supabase%20PostgreSQL%20%E8%BF%9E%E6%8E%A5%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%92%8C%20JWT%20%E5%AF%86%E9%92%A5&envLink=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise%2Fblob%2Fmain%2F.env.example&project-name=seatwise-api&repository-name=SeatWise-API)
+
+| 变量名 | 值 | 说明 |
+|--------|-----|------|
+| `DATABASE_URL` | `postgresql://postgres.xxxxx:密码@...` | 第 1 步复制的连接字符串 |
+| `JWT_SECRET` | 任意随机字符串（≥32字符） | [点击生成](https://randomkeygen.com/) |
+| `JWT_REFRESH_SECRET` | 另一个随机字符串 | 与上面不同即可 |
+
+> 部署完成后，记录生成的后端地址，格式为 `https://seatwise-api-xxxx.vercel.app`
+
+#### 第 3 步：部署前端（约 1 分钟）
+
+点击下方按钮，填入后端地址：
+
+[![Deploy Frontend to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise&root-directory=apps%2Fweb&env=VITE_API_BASE_URL&envDescription=%E5%90%8E%E7%AB%AF%20API%20%E5%9C%B0%E5%9D%80&envLink=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise%2Fblob%2Fmain%2F.env.example&project-name=seatwise&repository-name=SeatWise)
+
+| 变量名 | 值 |
+|--------|-----|
+| `VITE_API_BASE_URL` | `https://第2步的后端地址/api` |
+
+#### 第 4 步：初始化数据库（约 1 分钟）
+
+在本地电脑执行以下命令（需先安装 [Node.js](https://nodejs.org/)）：
 
 ```bash
+# 克隆项目
+git clone https://github.com/Meet7th/SeatWise.git
+cd SeatWise
+
+# 安装依赖
+pnpm install
+
+# 准备数据库
+cd apps/server
+cp prisma/schema.postgres.prisma prisma/schema.prisma
+
+# 创建环境配置
+echo DATABASE_URL=你的Supabase连接字符串 > .env
+echo JWT_SECRET=第2步填的JWT_SECRET >> .env
+echo JWT_REFRESH_SECRET=第2步填的JWT_REFRESH_SECRET >> .env
+
+# 初始化数据库表
+npx prisma db push
+
+# 灌入测试数据（教师、学生、测评题）
+npx prisma db seed
+```
+
+> 完成后打开前端地址，使用测试账号登录即可体验
+
+---
+
+### 方式二：脚本全自动部署
+
+> 🟢 一行命令 · 自动安装依赖 · 自动部署 · 只需粘贴数据库地址
+
+只需安装 [Node.js](https://nodejs.org/)（≥ 18），无需其他任何工具：
+
+**Windows（CMD 或 PowerShell）：**
+
+```cmd
 curl -fsSL https://raw.githubusercontent.com/Meet7th/SeatWise/main/deploy.bat -o deploy.bat && deploy.bat
 ```
 
-**Mac / Linux：**
+**Mac / Linux（终端）：**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Meet7th/SeatWise/main/deploy.sh | bash
 ```
 
-脚本会自动完成以下全部操作：
+脚本执行流程：
 
-| 步骤 | 操作 | 状态 |
+| 步骤 | 操作 | 说明 |
 |------|------|------|
-| 1 | 安装 pnpm 和 Vercel CLI | 🤖 自动 |
-| 2 | 登录 Vercel（浏览器弹窗） | 👤 一次 |
-| 3 | 引导创建 Supabase 数据库 | 👤 粘贴地址 |
-| 4 | 生成 JWT 安全密钥 | 🤖 自动 |
-| 5 | 初始化数据库表和测试数据 | 🤖 自动 |
-| 6 | 部署后端 API 到 Vercel | 🤖 自动 |
-| 7 | 部署前端到 Vercel | 🤖 自动 |
-| 8 | 关联前后端地址 | 🤖 自动 |
+| ① | 检查 Node.js | 确认已安装 Node.js ≥ 18 |
+| ② | 安装 pnpm | 自动全局安装（如未安装） |
+| ③ | 安装 Vercel CLI | 自动全局安装（如未安装） |
+| ④ | 登录 Vercel | 浏览器自动弹窗，授权一次即可 |
+| ⑤ | 克隆项目代码 | 自动从 GitHub 拉取最新代码 |
+| ⑥ | 安装项目依赖 | 自动运行 pnpm install |
+| ⑦ | 创建 Supabase 数据库 | 引导你在浏览器中操作，粘贴连接字符串 |
+| ⑧ | 生成 JWT 密钥 | 自动生成安全密钥 |
+| ⑨ | 初始化数据库 | 自动创建表结构 + 灌入测试数据 |
+| ⑩ | 部署后端到 Vercel | 自动配置环境变量并部署 |
+| ⑪ | 部署前端到 Vercel | 自动关联后端地址并部署 |
+| ⑫ | 关联前后端 | 自动更新后端的前端地址配置 |
 
 <details>
-<summary>📋 如何获取 Supabase 数据库连接字符串？</summary>
+<summary>📋 脚本部署前提条件</summary>
 
-1. 打开 [Supabase](https://supabase.com/new)，用 GitHub 登录
-2. 点击 **New Project**，填写项目名称和数据库密码
-3. 等待创建完成（约 1-2 分钟）
-4. 进入 **Settings → Database**
-5. 找到 **Connection string**，选择 **Transaction** 模式
-6. 复制连接字符串，将 `[YOUR-PASSWORD]` 替换为你设置的密码
+- **Node.js** ≥ 18：[下载安装](https://nodejs.org/)
+- **Git**：[下载安装](https://git-scm.com/)
+- **Vercel 账号**：[免费注册](https://vercel.com/signup)（可用 GitHub 登录）
+- **Supabase 账号**：[免费注册](https://supabase.com/new)（可用 GitHub 登录）
+
+脚本会自动安装 pnpm 和 Vercel CLI，无需手动操作。
 
 </details>
 
 ---
 
-### 方式二：本地一键启动
+### 方式三：本地一键启动
 
-> 🟢 零配置 · 无需数据库 · 双击即用
+> 🟢 零配置 · 无需服务器 · 无需数据库 · 双击即用
 
 只需安装 [Node.js](https://nodejs.org/)（≥ 18）：
 
@@ -166,13 +245,19 @@ pnpm install
 pnpm start
 ```
 
-Windows 用户可直接双击 `start.bat`，Mac/Linux 用户运行 `./start.sh`。
+| 系统 | 操作 |
+|------|------|
+| Windows | 双击 `start.bat` |
+| Mac / Linux | 终端运行 `./start.sh` |
+| 任意系统 | 运行 `pnpm start` |
+
+> 启动后自动打开浏览器，使用 SQLite 本地数据库，数据保存在 `apps/server/seatwise.db`
 
 ---
 
-### 方式三：Docker 部署
+### 方式四：Docker 部署
 
-> 🟡 需要安装 Docker Desktop
+> 🟡 需要安装 [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
 ```bash
 git clone https://github.com/Meet7th/SeatWise.git
@@ -181,49 +266,13 @@ cp .env.example .env
 docker-compose up -d
 ```
 
-访问：前端 `http://localhost:5173` · 后端 `http://localhost:3000`
+| 服务 | 地址 |
+|------|------|
+| 前端 | http://localhost:5173 |
+| 后端 | http://localhost:3000 |
+| 数据库 | MySQL 3306 端口 |
 
----
-
-### 方式四：Vercel 手动部署
-
-> 适合需要自定义配置的用户
-
-<details>
-<summary>展开查看手动部署步骤</summary>
-
-**第 1 步：部署后端 API**
-
-[![Deploy Backend to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise&root-directory=apps%2Fserver&env=DATABASE_URL%2CJWT_SECRET%2CJWT_REFRESH_SECRET&envDescription=Supabase%20PostgreSQL%20%E8%BF%9E%E6%8E%A5%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%92%8C%20JWT%20%E5%AF%86%E9%92%A5&envLink=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise%2Fblob%2Fmain%2F.env.example&project-name=seatwise-api&repository-name=SeatWise-API)
-
-| 变量名 | 值 | 说明 |
-|--------|-----|------|
-| `DATABASE_URL` | `postgresql://...` | Supabase 连接字符串 |
-| `JWT_SECRET` | 随机字符串（≥32字符） | [在线生成](https://randomkeygen.com/) |
-| `JWT_REFRESH_SECRET` | 另一个随机字符串 | 与上面不同 |
-
-**第 2 步：部署前端**
-
-[![Deploy Frontend to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise&root-directory=apps%2Fweb&env=VITE_API_BASE_URL&envDescription=%E5%90%8E%E7%AB%AF%20API%20%E5%9C%B0%E5%9D%80&envLink=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise%2Fblob%2Fmain%2F.env.example&project-name=seatwise&repository-name=SeatWise)
-
-| 变量名 | 值 |
-|--------|-----|
-| `VITE_API_BASE_URL` | `https://第1步的后端地址/api` |
-
-**第 3 步：初始化数据库**
-
-```bash
-git clone https://github.com/Meet7th/SeatWise.git
-cd SeatWise
-pnpm install
-cd apps/server
-cp prisma/schema.postgres.prisma prisma/schema.prisma
-# 创建 .env 文件，填入 DATABASE_URL
-npx prisma db push
-npx prisma db seed
-```
-
-</details>
+停止：`docker-compose down`
 
 ---
 
