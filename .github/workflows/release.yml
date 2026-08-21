@@ -75,8 +75,8 @@ jobs:
 
             **Docker 部署：**
             ```bash
-            docker pull meet7th/seatwise-web:latest
-            docker pull meet7th/seatwise-server:latest
+            docker pull ghcr.io/meet7th/seatwise-web:latest
+            docker pull ghcr.io/meet7th/seatwise-server:latest
             ```
           draft: false
           prerelease: false
