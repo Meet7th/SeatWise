@@ -153,29 +153,68 @@
 
 #### 第 4 步：初始化数据库（约 1 分钟）
 
-在本地电脑执行以下命令（需先安装 [Node.js](https://nodejs.org/)）：
+这一步是在你的**本地电脑**上执行的，作用是给空数据库创建表结构和测试数据。
 
-```bash
-# 克隆项目
+**前提条件：** 已安装 [Node.js](https://nodejs.org/)（≥ 18）
+
+**Windows 用户（CMD 或 PowerShell）：**
+
+```cmd
+:: 1. 克隆项目（如果已下载则跳过）
 git clone https://github.com/Meet7th/SeatWise.git
 cd SeatWise
 
-# 安装依赖
+:: 2. 安装 pnpm（如果没有的话）
+npm install -g pnpm
+
+:: 3. 安装项目依赖
 pnpm install
 
-# 准备数据库
+:: 4. 进入后端目录
 cd apps/server
-cp prisma/schema.postgres.prisma prisma/schema.prisma
 
-# 创建环境配置
+:: 5. 复制数据库 Schema
+copy prisma\schema.postgres.prisma prisma\schema.prisma
+
+:: 6. 创建环境配置文件（请替换下面的值）
 echo DATABASE_URL=你的Supabase连接字符串 > .env
 echo JWT_SECRET=第2步填的JWT_SECRET >> .env
 echo JWT_REFRESH_SECRET=第2步填的JWT_REFRESH_SECRET >> .env
 
-# 初始化数据库表
+:: 7. 创建数据库表
 npx prisma db push
 
-# 灌入测试数据（教师、学生、测评题）
+:: 8. 灌入测试数据
+npx prisma db seed
+```
+
+**Mac / Linux 用户（终端）：**
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/Meet7th/SeatWise.git
+cd SeatWise
+
+# 2. 安装依赖
+pnpm install
+
+# 3. 进入后端目录
+cd apps/server
+
+# 4. 复制数据库 Schema
+cp prisma/schema.postgres.prisma prisma/schema.prisma
+
+# 5. 创建环境配置文件（请替换下面的值）
+cat > .env << EOF
+DATABASE_URL=你的Supabase连接字符串
+JWT_SECRET=第2步填的JWT_SECRET
+JWT_REFRESH_SECRET=第2步填的JWT_REFRESH_SECRET
+EOF
+
+# 6. 创建数据库表
+npx prisma db push
+
+# 7. 灌入测试数据
 npx prisma db seed
 ```
 
@@ -189,16 +228,38 @@ npx prisma db seed
 
 只需安装 [Node.js](https://nodejs.org/)（≥ 18），无需其他任何工具：
 
-**Windows（CMD 或 PowerShell）：**
+**Windows 用户：**
 
 ```cmd
+:: 方法 1：直接运行（推荐，如果已下载项目代码）
+cd C:\Users\你的用户名\Desktop\SeatWise
+deploy.bat
+
+:: 方法 2：curl 下载运行（如果网络正常）
 curl -fsSL https://raw.githubusercontent.com/Meet7th/SeatWise/main/deploy.bat -o deploy.bat && deploy.bat
+
+:: 方法 3：如果 curl 报证书错误（国内网络常见）
+git clone https://github.com/Meet7th/SeatWise.git
+cd SeatWise
+deploy.bat
 ```
 
-**Mac / Linux（终端）：**
+**Mac / Linux 用户：**
 
 ```bash
+# 方法 1：直接运行（如果已下载项目代码）
+cd ~/SeatWise
+chmod +x deploy.sh
+./deploy.sh
+
+# 方法 2：curl 下载运行
 curl -fsSL https://raw.githubusercontent.com/Meet7th/SeatWise/main/deploy.sh | bash
+
+# 方法 3：如果 curl 报错
+git clone https://github.com/Meet7th/SeatWise.git
+cd SeatWise
+chmod +x deploy.sh
+./deploy.sh
 ```
 
 脚本执行流程：
@@ -230,6 +291,26 @@ curl -fsSL https://raw.githubusercontent.com/Meet7th/SeatWise/main/deploy.sh | b
 
 </details>
 
+<details>
+<summary>🔧 常见问题排查</summary>
+
+**Q: curl 报证书错误 `CRYPT_E_NO_REVOCATION_CHECK`**
+A: 国内网络常见问题，使用方法 3（先 git clone 再运行脚本）
+
+**Q: `vercel login` 浏览器没有弹出**
+A: 手动打开终端中显示的链接进行授权
+
+**Q: `pnpm install` 报错**
+A: 运行 `npm install -g pnpm@9` 安装指定版本
+
+**Q: 部署后前端白屏**
+A: 检查 `VITE_API_BASE_URL` 是否正确，必须是 `https://后端地址/api`
+
+**Q: 部署后登录报错**
+A: 确认第 4 步数据库初始化是否成功完成
+
+</details>
+
 ---
 
 ### 方式三：本地一键启动
@@ -238,18 +319,37 @@ curl -fsSL https://raw.githubusercontent.com/Meet7th/SeatWise/main/deploy.sh | b
 
 只需安装 [Node.js](https://nodejs.org/)（≥ 18）：
 
-```bash
+**Windows 用户：**
+
+```cmd
+:: 1. 克隆项目
 git clone https://github.com/Meet7th/SeatWise.git
 cd SeatWise
+
+:: 2. 安装依赖
+npm install -g pnpm
 pnpm install
+
+:: 3. 启动（自动打开浏览器）
 pnpm start
+
+:: 或者直接双击 start.bat
 ```
 
-| 系统 | 操作 |
-|------|------|
-| Windows | 双击 `start.bat` |
-| Mac / Linux | 终端运行 `./start.sh` |
-| 任意系统 | 运行 `pnpm start` |
+**Mac / Linux 用户：**
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/Meet7th/SeatWise.git
+cd SeatWise
+
+# 2. 安装依赖
+pnpm install
+
+# 3. 启动
+./start.sh
+# 或者 pnpm start
+```
 
 > 启动后自动打开浏览器，使用 SQLite 本地数据库，数据保存在 `apps/server/seatwise.db`
 
