@@ -6,6 +6,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178c6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Prisma](https://img.shields.io/badge/Prisma-5-2D3748?style=flat&logo=prisma)](https://www.prisma.io/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-06B6D4?style=flat&logo=tailwindcss)](https://tailwindcss.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
@@ -15,19 +16,22 @@
 - [核心功能](#核心功能)
 - [技术架构](#技术架构)
 - [快速开始](#快速开始)
-  - [方式一：Docker 一键部署（推荐）](#方式一docker-一键部署推荐)
+  - [方式零：一键启动（零基础推荐）](#方式零一键启动零基础推荐)
+  - [方式一：Docker 一键部署](#方式一docker-一键部署)
   - [方式二：纯本地开发运行](#方式二纯本地开发运行)
   - [方式三：生产环境部署](#方式三生产环境部署)
+  - [方式四：Vercel + Supabase 云端部署（免费）](#方式四vercel--supabase-云端部署免费)
 - [用户使用指南](#用户使用指南)
 - [配置说明](#配置说明)
 - [常见问题](#常见问题)
+- [项目状态](#项目状态)
 - [License](#license)
 
 ---
 
 ## 项目简介
 
-**智座 SeatWise** 是一款面向中小学的 AI 智能排座系统。系统通过 35 道多维度性格测评题目，自动生成学生的 MBTI 性格类型、学习风格、社交类型等画像，再结合性别均衡、特殊需求、社交偏好等约束条件，利用概率引擎一键生成最优座位方案。
+**智座 SeatWise** 是一款面向初中、高中等全学龄段（不含幼儿园、小学）的 AI 智能排座系统。系统通过 35 道多维度性格测评题目，自动生成学生的 MBTI 性格类型、学习风格、社交类型等画像，再结合性别均衡、特殊需求、社交偏好等约束条件，利用概率引擎一键生成最优座位方案。
 
 ### 适用场景
 
@@ -76,12 +80,21 @@
 │              Prisma ORM + JWT + Zod Validation           │
 └─────────────────────────────────────────────────────────┘
                            │
-              ┌────────────┴────────────┐
-              │                         │
-        ┌─────┴─────┐            ┌──────┴──────┐
-        │   MySQL   │            │    Redis    │
-        └───────────┘            └─────────────┘
+              ┌────────────┼────────────┐
+              │            │            │
+        ┌─────┴─────┐ ┌───┴───┐ ┌──────┴──────┐
+        │   MySQL   │ │ SQLite│ │ PostgreSQL  │
+        │  (生产)   │ │(本地) │ │  (云端)     │
+        └───────────┘ └───────┘ └─────────────┘
 ```
+
+### 数据库支持
+
+| 模式 | 适用场景 | 说明 |
+|------|----------|------|
+| **SQLite** | 本地开发、零基础用户 | 无需安装数据库，文件存储 |
+| **MySQL** | 生产环境、学校部署 | 传统关系型数据库 |
+| **PostgreSQL** | 云端部署（Supabase） | Vercel + Supabase 免费方案 |
 
 ### 目录结构
 
@@ -100,6 +113,7 @@ SeatWise/
 │   │   │   └── views/          # 页面视图
 │   │   └── package.json
 │   └── server/                 # 后端 Express API
+│       ├── api/                # Vercel Serverless 入口
 │       ├── src/
 │       │   ├── config/         # 环境配置
 │       │   ├── middleware/     # 中间件
@@ -107,15 +121,24 @@ SeatWise/
 │       │   ├── services/       # 业务逻辑
 │       │   └── utils/          # 工具函数
 │       ├── prisma/
-│       │   ├── schema.prisma   # 数据库模型
-│       │   └── seed.ts         # 种子数据
+│       │   ├── schema.prisma          # MySQL Schema
+│       │   ├── schema.sqlite.prisma   # SQLite Schema
+│       │   ├── schema.postgres.prisma # PostgreSQL Schema
+│       │   └── seed.ts                # 种子数据
 │       └── package.json
 ├── packages/
 │   └── shared/                 # 前后端共享类型
 │       └── types/
+├── scripts/
+│   ├── start.mjs               # 一键启动脚本（本地）
+│   ├── cloud-deploy.mjs        # 云端一键部署脚本
+│   └── deploy-vercel.mjs       # Vercel 部署脚本
+├── start.bat                   # Windows 一键启动
+├── start.sh                    # Mac/Linux 一键启动
 ├── docker-compose.yml          # Docker 编排
 ├── Dockerfile.frontend         # 前端镜像
 ├── Dockerfile.backend          # 后端镜像
+├── vercel.json                 # Vercel 前端配置
 └── package.json                # Monorepo 根配置
 ```
 
@@ -149,7 +172,7 @@ chmod +x start.sh
 ./start.sh
 ```
 
-**或使用 npm 命令（所有平台通用）：**
+**或使用命令（所有平台通用）：**
 
 ```bash
 pnpm start
@@ -185,8 +208,8 @@ pnpm start
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/your-org/seatwise.git
-cd seatwise
+git clone https://github.com/Meet7th/SeatWise.git
+cd SeatWise
 
 # 2. 复制环境配置
 cp .env.example .env
@@ -222,17 +245,16 @@ Docker 部署会自动将 MySQL 数据保存在 `docker-data/mysql` 目录，重
 | Node.js | >= 18.x | https://nodejs.org/ |
 | pnpm | >= 8.x | https://pnpm.io/ |
 | MySQL | >= 8.0 | https://dev.mysql.com/ |
-| Redis | >= 6.x | https://redis.io/ |
 
 #### 安装步骤
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/your-org/seatwise.git
-cd seatwise
+git clone https://github.com/Meet7th/SeatWise.git
+cd SeatWise
 
 # 2. 安装依赖
-npx pnpm install
+pnpm install
 
 # 3. 配置环境变量
 cp .env.example .env
@@ -245,10 +267,10 @@ npx prisma db seed
 cd ../..
 
 # 5. 启动后端（新终端）
-npx pnpm dev:server
+pnpm dev:server
 
 # 6. 启动前端（新终端）
-npx pnpm dev
+pnpm dev
 ```
 
 #### 访问系统
@@ -274,7 +296,7 @@ npx pnpm dev
 
 ```bash
 cd apps/web
-npx pnpm build
+pnpm build
 # 产物在 dist/ 目录
 ```
 
@@ -282,7 +304,7 @@ npx pnpm build
 
 ```bash
 cd apps/server
-npx pnpm build
+pnpm build
 # 产物在 dist/ 目录
 ```
 
@@ -466,16 +488,25 @@ pnpm cloud-deploy
 
 ## 配置说明
 
-### 必填配置
+### 数据库配置
+
+系统支持三种数据库模式，根据部署方式选择：
 
 ```env
-# 数据库
+# SQLite（默认，零基础推荐，无需安装数据库）
+DATABASE_URL=file:./seatwise.db
+
+# MySQL（生产环境）
 DATABASE_URL=mysql://用户名:密码@localhost:3306/seatwise
 
-# Redis
-REDIS_URL=redis://localhost:6379
+# PostgreSQL（Supabase 云端部署）
+DATABASE_URL=postgresql://postgres.[项目ID]:[密码]@aws-0-[区域].pooler.supabase.com:6532/postgres
+```
 
-# JWT 密钥（用于用户认证）
+### JWT 配置
+
+```env
+# JWT 密钥（用于用户认证，生产环境请使用随机生成的密钥）
 JWT_SECRET=your-random-secret-key
 JWT_REFRESH_SECRET=your-random-refresh-key
 ```
@@ -508,13 +539,13 @@ SMTP_PASS=your-email-password
 
 ### Q: 需要会编程才能使用吗？
 
-**不需要。** 推荐使用 Docker 一键部署，只需安装 Docker Desktop，运行一条命令即可启动系统。详细步骤见 [Docker 一键部署](#方式一docker-一键部署推荐)。
+**不需要。** 推荐使用[方式零：一键启动](#方式零一键启动零基础推荐)，只需安装 Node.js，双击 `start.bat` 即可运行。
 
-### Q: 需要什么样的服务器？
+### Q: 需要什么样的电脑配置？
 
 | 用途 | 最低配置 | 推荐配置 |
 |------|----------|----------|
-| 个人测试 | 2核4G | 2核8G |
+| 个人测试 | 任意电脑 | 4GB 内存 |
 | 学校使用（50人） | 2核4G | 4核8G |
 | 学校使用（200人） | 4核8G | 8核16G |
 
@@ -523,11 +554,11 @@ SMTP_PASS=your-email-password
 - 密码使用 bcrypt 加密存储
 - JWT Token 认证
 - 支持 HTTPS（需配置 SSL 证书）
-- 数据库数据本地存储，不上传云端
+- 本地部署数据完全离线，云端部署使用 Supabase 免费套餐
 
 ### Q: 可以离线使用吗？
 
-可以。系统完全本地部署，无需联网即可使用（OAuth 登录和短信验证除外）。
+可以。使用[方式零](#方式零一键启动零基础推荐)或[方式一](#方式一docker-一键部署)完全本地部署，无需联网即可使用（OAuth 登录和短信验证除外）。
 
 ### Q: 如何备份数据？
 
@@ -538,6 +569,8 @@ mysqldump -u root -p seatwise > backup.sql
 # 恢复
 mysql -u root -p seatwise < backup.sql
 ```
+
+SQLite 模式直接备份 `apps/server/seatwise.db` 文件即可。
 
 Docker 部署可直接备份 `docker-data/mysql` 目录。
 
@@ -551,10 +584,17 @@ git pull
 docker-compose up -d --build
 
 # 本地部署
-npx pnpm install
+pnpm install
 cd apps/server && npx prisma db push
-cd ../web && npx pnpm build
+cd ../web && pnpm build
 ```
+
+### Q: 支持哪些浏览器？
+
+- Chrome / Edge（推荐）
+- Firefox
+- Safari
+- 移动端浏览器（学生端适配）
 
 ---
 
@@ -568,6 +608,7 @@ cd ../web && npx pnpm build
 | Phase 4 | ✅ 完成 | 申诉管理 + 通知系统 |
 | Phase 5 | ✅ 完成 | 数据导出 + 深色模式 + 移动端适配 |
 | Phase 6 | ✅ 完成 | 第三方登录 + 短信/邮件验证 |
+| Phase 7 | ✅ 完成 | 多数据库支持 + 一键部署 + 云端部署 |
 
 ---
 
