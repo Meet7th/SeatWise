@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
+  "installCommand": "corepack enable && pnpm install",
   "builds": [
     {
       "src": "api/index.ts",
@@ -9,7 +10,8 @@
         "includeFiles": [
           "src/**/*.ts",
           "prisma/schema.postgres.prisma",
-          "tsconfig.json"
+          "tsconfig.json",
+          "../../packages/shared/**/*.ts"
         ]
       }
     }
