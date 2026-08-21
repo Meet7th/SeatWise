@@ -335,6 +335,109 @@ npx prisma db seed
 
 ---
 
+### 方式四：Vercel + Supabase 云端部署（免费）
+
+> **适合需要公网访问的用户**，无需服务器，利用免费云平台一键部署。
+
+#### 前置条件
+
+| 工具 | 说明 | 注册地址 |
+|------|------|----------|
+| GitHub 账号 | 代码托管 | https://github.com |
+| Vercel 账号 | 前端 + 后端托管（免费） | https://vercel.com（可用 GitHub 登录） |
+| Supabase 账号 | PostgreSQL 数据库（免费） | https://supabase.com（可用 GitHub 登录） |
+
+#### 部署步骤
+
+##### 第一步：创建 Supabase 数据库
+
+1. 登录 [Supabase](https://supabase.com)，点击 **New Project**
+2. 填写项目名称、数据库密码、选择区域（建议 Asia Pacific）
+3. 等待项目创建完成（约 1-2 分钟）
+4. 进入 **Settings > Database**，复制 **Connection string**（Transaction mode）
+5. 将连接字符串中的 `[YOUR-PASSWORD]` 替换为你设置的数据库密码
+
+##### 第二步：部署后端 API
+
+1. 登录 [Vercel](https://vercel.com)，点击 **Add New > Project**
+2. 导入你的 SeatWise GitHub 仓库
+3. 配置项目：
+   - **Framework Preset**: Other
+   - **Root Directory**: `apps/server`
+   - **Build Command**: `npx prisma generate && npx prisma db push --accept-data-loss`
+   - **Output Directory**: 留空
+4. 添加环境变量：
+
+   | 变量名 | 值 |
+   |--------|-----|
+   | `DATABASE_URL` | Supabase 连接字符串 |
+   | `JWT_SECRET` | 随机生成的密钥（至少 32 字符） |
+   | `JWT_REFRESH_SECRET` | 另一个随机密钥 |
+   | `FRONTEND_URL` | 稍后填入前端地址 |
+
+5. 点击 **Deploy**，等待部署完成
+6. 记录后端 URL（如 `https://seatwise-api.vercel.app`）
+
+##### 第三步：初始化数据库
+
+在本地运行（需要安装 Node.js）：
+
+```bash
+# 克隆项目
+git clone https://github.com/Meet7th/SeatWise.git
+cd SeatWise
+
+# 安装依赖
+pnpm install
+
+# 配置 Supabase 连接
+cd apps/server
+cp prisma/schema.postgres.prisma prisma/schema.prisma
+# 编辑 .env，填入 Supabase DATABASE_URL
+
+# 创建数据库表
+npx prisma db push
+
+# 灌入测试数据
+npx prisma db seed
+```
+
+##### 第四步：部署前端
+
+1. 在 Vercel 再次点击 **Add New > Project**
+2. 再次导入同一个 GitHub 仓库
+3. 配置项目：
+   - **Framework Preset**: Vite
+   - **Root Directory**: `apps/web`
+4. 添加环境变量：
+
+   | 变量名 | 值 |
+   |--------|-----|
+   | `VITE_API_BASE_URL` | `https://你的后端URL.vercel.app/api` |
+
+5. 点击 **Deploy**，等待部署完成
+6. 记录前端 URL（如 `https://seatwise.vercel.app`）
+
+##### 第五步：回填前端地址
+
+回到后端项目 → Settings → Environment Variables，将 `FRONTEND_URL` 更新为前端的实际 URL，然后重新部署后端。
+
+#### 访问系统
+
+- 前端：`https://你的项目.vercel.app`
+- 后端 API：`https://你的API.vercel.app/api/health`
+
+#### Cloudflare 加速（可选）
+
+如需自定义域名或 CDN 加速：
+
+1. 在 [Cloudflare](https://cloudflare.com) 添加你的域名
+2. 将域名的 Nameserver 修改为 Cloudflare 提供的地址
+3. 在 Cloudflare DNS 中添加 CNAME 记录指向 Vercel
+4. 在 Vercel 项目设置中绑定自定义域名
+
+---
+
 ## 用户使用指南
 
 ### 教师端

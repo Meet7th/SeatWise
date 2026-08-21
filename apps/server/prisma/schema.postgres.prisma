@@ -1,0 +1,194 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String     @id @default(uuid())
+  role          String     @default("student")
+  name          String
+  avatar        String?
+  phone         String?    @unique
+  email         String?    @unique
+  passwordHash  String?    @map("password_hash")
+  wechatOpenId  String?    @unique @map("wechat_open_id")
+  qqOpenId      String?    @unique @map("qq_open_id")
+  studentNumber String?    @map("student_number")
+  schoolId      String?    @map("school_id")
+  status        String     @default("active")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  lastLoginAt   DateTime?  @map("last_login_at")
+
+  homeroomClasses  Classroom[]     @relation("HomeroomTeacher")
+  teachingClasses  Classroom[]     @relation("ClassTeachers")
+  classMemberships ClassStudent[]
+  profile          StudentProfile?
+  quizSessions     QuizSession[]
+  appeals          Appeal[]
+  notifications    Notification[]
+  createdPlans     SeatPlan[]      @relation("PlanCreator")
+  publishedPlans   SeatPlan[]      @relation("PlanPublisher")
+
+  @@map("users")
+}
+
+model Classroom {
+  id                 String    @id @default(uuid())
+  name               String
+  grade              String
+  semester           String
+  schoolId           String?   @map("school_id")
+  homeroomTeacherId  String    @map("homeroom_teacher_id")
+  seatConfig         Json      @map("seat_config")
+  strategy           String    @default("fresh")
+  status             String    @default("setup")
+  inviteCode         String    @unique @map("invite_code")
+  inviteExpiresAt    DateTime? @map("invite_expires_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  homeroomTeacher User            @relation("HomeroomTeacher", fields: [homeroomTeacherId], references: [id])
+  teachers        User[]          @relation("ClassTeachers")
+  students        ClassStudent[]
+  profiles        StudentProfile[]
+  quizSessions    QuizSession[]
+  seatPlans       SeatPlan[]
+  appeals         Appeal[]
+
+  @@map("classrooms")
+}
+
+model ClassStudent {
+  classId   String    @map("class_id")
+  studentId String    @map("student_id")
+  joinedAt  DateTime  @default(now()) @map("joined_at")
+
+  class   Classroom @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@id([classId, studentId])
+  @@map("class_students")
+}
+
+model StudentProfile {
+  id                  String   @id @default(uuid())
+  studentId           String   @unique @map("student_id")
+  classId             String   @map("class_id")
+  mbti                Json?
+  learningStyle       String?  @map("learning_style")
+  socialType          String?  @map("social_type")
+  interests           Json     @default("[]")
+  specialNeeds        Json     @default("{}") @map("special_needs")
+  socialPreferences   Json     @default("{}") @map("social_preferences")
+  selfAssessment      Json?    @map("self_assessment")
+  scores              Json     @default("{}")
+  gender              String
+  lunch               Boolean  @default(false)
+  personality         String?
+  position            String?
+  teacherNotes        String   @default("")
+  pinned              Boolean  @default(false)
+  compositeScore      Decimal? @map("composite_score")
+  avgScore            Decimal? @map("avg_score")
+  profileCompleteness Decimal  @default(0) @map("profile_completeness")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  student User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class   Classroom @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([classId])
+  @@map("student_profiles")
+}
+
+model QuizSession {
+  id          String    @id @default(uuid())
+  studentId   String    @map("student_id")
+  classId     String    @map("class_id")
+  status      String    @default("not_started")
+  answers     Json      @default("{}")
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  student User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class   Classroom @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, classId])
+  @@index([classId, status])
+  @@map("quiz_sessions")
+}
+
+model SeatPlan {
+  id          String   @id @default(uuid())
+  classId     String   @map("class_id")
+  version     Int      @default(1)
+  name        String?
+  strategy    String
+  assignments Json
+  weights     Json
+  metrics     Json
+  status      String   @default("draft")
+  publishedAt DateTime? @map("published_at")
+  publishedBy String?   @map("published_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  createdBy   String    @map("created_by")
+
+  class     Classroom @relation(fields: [classId], references: [id], onDelete: Cascade)
+  creator   User      @relation("PlanCreator", fields: [createdBy], references: [id])
+  publisher User?     @relation("PlanPublisher", fields: [publishedBy], references: [id])
+  appeals   Appeal[]
+
+  @@index([classId, status])
+  @@map("seat_plans")
+}
+
+model Appeal {
+  id                String   @id @default(uuid())
+  studentId         String   @map("student_id")
+  classId           String   @map("class_id")
+  seatPlanId        String   @map("seat_plan_id")
+  type              String
+  description       String
+  desiredNeighborId String?  @map("desired_neighbor_id")
+  avoidNeighborId   String?  @map("avoid_neighbor_id")
+  reasonDetail      String?  @map("reason_detail")
+  attachments       Json     @default("[]")
+  status            String   @default("pending")
+  autoResolution    Json?    @map("auto_resolution")
+  teacherResolution Json?    @map("teacher_resolution")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  student  User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class    Classroom @relation(fields: [classId], references: [id], onDelete: Cascade)
+  seatPlan SeatPlan  @relation(fields: [seatPlanId], references: [id], onDelete: Cascade)
+
+  @@index([classId, status])
+  @@index([studentId])
+  @@map("appeals")
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  type        String
+  title       String
+  body        String
+  recipientId String   @map("recipient_id")
+  classId     String?  @map("class_id")
+  relatedType String?  @map("related_type")
+  relatedId   String?  @map("related_id")
+  read        Boolean  @default(false)
+  readAt      DateTime? @map("read_at")
+  channels    Json
+  sentAt      Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  recipient User @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, read])
+  @@index([recipientId, createdAt])
+  @@map("notifications")
+}
