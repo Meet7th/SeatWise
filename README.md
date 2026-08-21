@@ -335,7 +335,7 @@ npx prisma db seed
 
 ---
 
-### 方式四：Vercel + Supabase 云端部署（免费）
+### 方式四：Vercel + Supabase 云端部署（免费）⭐
 
 > **适合需要公网访问的用户**，无需服务器，利用免费云平台一键部署。
 
@@ -343,88 +343,50 @@ npx prisma db seed
 
 | 工具 | 说明 | 注册地址 |
 |------|------|----------|
+| Node.js | >= 18.x | https://nodejs.org/ |
 | GitHub 账号 | 代码托管 | https://github.com |
 | Vercel 账号 | 前端 + 后端托管（免费） | https://vercel.com（可用 GitHub 登录） |
 | Supabase 账号 | PostgreSQL 数据库（免费） | https://supabase.com（可用 GitHub 登录） |
 
-#### 部署步骤
-
-##### 第一步：创建 Supabase 数据库
-
-1. 登录 [Supabase](https://supabase.com)，点击 **New Project**
-2. 填写项目名称、数据库密码、选择区域（建议 Asia Pacific）
-3. 等待项目创建完成（约 1-2 分钟）
-4. 进入 **Settings > Database**，复制 **Connection string**（Transaction mode）
-5. 将连接字符串中的 `[YOUR-PASSWORD]` 替换为你设置的数据库密码
-
-##### 第二步：部署后端 API
-
-1. 登录 [Vercel](https://vercel.com)，点击 **Add New > Project**
-2. 导入你的 SeatWise GitHub 仓库
-3. 配置项目：
-   - **Framework Preset**: Other
-   - **Root Directory**: `apps/server`
-   - **Build Command**: `npx prisma generate && npx prisma db push --accept-data-loss`
-   - **Output Directory**: 留空
-4. 添加环境变量：
-
-   | 变量名 | 值 |
-   |--------|-----|
-   | `DATABASE_URL` | Supabase 连接字符串 |
-   | `JWT_SECRET` | 随机生成的密钥（至少 32 字符） |
-   | `JWT_REFRESH_SECRET` | 另一个随机密钥 |
-   | `FRONTEND_URL` | 稍后填入前端地址 |
-
-5. 点击 **Deploy**，等待部署完成
-6. 记录后端 URL（如 `https://seatwise-api.vercel.app`）
-
-##### 第三步：初始化数据库
-
-在本地运行（需要安装 Node.js）：
+#### 一键部署
 
 ```bash
-# 克隆项目
+# 1. 克隆项目
 git clone https://github.com/Meet7th/SeatWise.git
 cd SeatWise
 
-# 安装依赖
+# 2. 安装依赖
 pnpm install
 
-# 配置 Supabase 连接
-cd apps/server
-cp prisma/schema.postgres.prisma prisma/schema.prisma
-# 编辑 .env，填入 Supabase DATABASE_URL
-
-# 创建数据库表
-npx prisma db push
-
-# 灌入测试数据
-npx prisma db seed
+# 3. 一键部署
+pnpm cloud-deploy
 ```
 
-##### 第四步：部署前端
+脚本会自动完成：
+- ✅ 检测并安装 Vercel CLI
+- ✅ 登录 Vercel
+- ✅ 生成安全密钥
+- ✅ 部署后端 API 到 Vercel
+- ✅ 部署前端到 Vercel
+- ✅ 初始化 Supabase 数据库
+- ✅ 灌入测试数据
+- ✅ 输出访问地址和测试账号
 
-1. 在 Vercel 再次点击 **Add New > Project**
-2. 再次导入同一个 GitHub 仓库
-3. 配置项目：
-   - **Framework Preset**: Vite
-   - **Root Directory**: `apps/web`
-4. 添加环境变量：
+#### 手动操作（仅 1 步）
 
-   | 变量名 | 值 |
-   |--------|-----|
-   | `VITE_API_BASE_URL` | `https://你的后端URL.vercel.app/api` |
+脚本运行时会提示你：
 
-5. 点击 **Deploy**，等待部署完成
-6. 记录前端 URL（如 `https://seatwise.vercel.app`）
+1. **打开 https://supabase.com/new** 创建一个免费项目
+2. 创建完成后，进入 **Settings > Database**
+3. 复制 **Connection string**（选择 Transaction 模式）
+4. 粘贴到脚本提示中
 
-##### 第五步：回填前端地址
-
-回到后端项目 → Settings → Environment Variables，将 `FRONTEND_URL` 更新为前端的实际 URL，然后重新部署后端。
+其余所有步骤全部自动完成！
 
 #### 访问系统
 
-- 前端：`https://你的项目.vercel.app`
+部署完成后，脚本会输出：
+- 前端地址：`https://你的项目.vercel.app`
 - 后端 API：`https://你的API.vercel.app/api/health`
 
 #### Cloudflare 加速（可选）
