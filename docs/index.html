@@ -4,86 +4,109 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智座 SeatWise — AI 智能排座系统</title>
-    <meta name="description" content="基于学生性格测评与多维度画像的 AI 教室座位编排系统，让排座更科学、更公平。">
-    <meta name="keywords" content="智能排座,教室座位,性格测评,MBTI,学校管理,教育科技">
+    <meta name="description" content="基于学生性格测评与多维度画像的 AI 教室座位编排系统">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --primary: #4F46E5;
+            --primary: #6366F1;
             --primary-light: #818CF8;
-            --primary-dark: #3730A3;
+            --primary-dark: #4F46E5;
             --accent: #06B6D4;
             --accent-light: #22D3EE;
-            --bg: #0F172A;
-            --bg-light: #1E293B;
-            --bg-card: #1E293B;
-            --text: #F8FAFC;
-            --text-muted: #94A3B8;
-            --border: #334155;
-            --success: #10B981;
-            --warning: #F59E0B;
+            --bg: #0A0A0F;
+            --bg-card: rgba(255,255,255,0.03);
+            --text: #F1F5F9;
+            --text-muted: #64748B;
+            --border: rgba(255,255,255,0.06);
+            --glow: rgba(99, 102, 241, 0.4);
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
             background: var(--bg);
             color: var(--text);
-            line-height: 1.6;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* ===== Header ===== */
-        .header {
+        /* ===== Cursor Glow ===== */
+        .cursor-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.3s;
+        }
+
+        /* ===== Navigation ===== */
+        .nav {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 1000;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
             padding: 0 2rem;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .header-inner {
+        .nav.scrolled {
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-inner {
             max-width: 1200px;
             margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: 64px;
+            height: 72px;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             text-decoration: none;
             color: var(--text);
         }
 
-        .logo-icon {
-            width: 36px;
-            height: 36px;
+        .logo-mark {
+            width: 40px;
+            height: 40px;
             background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 10px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 22px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-mark::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.2));
         }
 
         .logo-text {
             font-size: 1.25rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
+            font-weight: 800;
+            letter-spacing: -0.03em;
         }
 
         .nav-links {
@@ -97,58 +120,72 @@
             text-decoration: none;
             font-size: 0.9rem;
             font-weight: 500;
-            transition: color 0.2s;
+            transition: color 0.3s;
+            position: relative;
         }
 
-        .nav-links a:hover {
-            color: var(--text);
+        .nav-links a:not(.btn)::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s;
         }
+
+        .nav-links a:not(.btn):hover { color: var(--text); }
+        .nav-links a:not(.btn):hover::after { width: 100%; }
 
         .btn {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 20px;
-            border-radius: 10px;
+            padding: 10px 22px;
+            border-radius: 12px;
             font-size: 0.9rem;
             font-weight: 600;
             text-decoration: none;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             cursor: pointer;
             border: none;
+            position: relative;
+            overflow: hidden;
         }
 
         .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
-            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+            box-shadow: 0 4px 20px var(--glow);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
+            box-shadow: 0 8px 30px var(--glow);
         }
 
-        .btn-outline {
-            background: transparent;
-            color: var(--text);
-            border: 1px solid var(--border);
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.1));
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
-        .btn-outline:hover {
-            background: var(--bg-light);
-            border-color: var(--primary-light);
-        }
+        .btn-primary:hover::before { opacity: 1; }
 
         .btn-ghost {
-            background: transparent;
-            color: var(--text-muted);
-            padding: 8px 12px;
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
         }
 
         .btn-ghost:hover {
-            color: var(--text);
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.15);
         }
 
         /* ===== Hero ===== */
@@ -160,80 +197,152 @@
             text-align: center;
             padding: 120px 2rem 80px;
             position: relative;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
             overflow: hidden;
         }
 
-        .hero::before {
-            content: '';
+        .hero-bg .gradient-orb {
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at 30% 50%, rgba(79, 70, 229, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 70% 50%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
-            animation: heroGlow 10s ease-in-out infinite alternate;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.4;
+            animation: float 20s ease-in-out infinite;
         }
 
-        @keyframes heroGlow {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(-5%, 5%); }
+        .hero-bg .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: var(--primary);
+            top: -200px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        .hero-bg .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: var(--accent);
+            bottom: -100px;
+            right: -50px;
+            animation-delay: -7s;
+        }
+
+        .hero-bg .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: #EC4899;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -14s;
+            opacity: 0.2;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -30px) scale(1.05); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(10px, -10px) scale(1.02); }
+        }
+
+        .hero-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
         }
 
         .hero-content {
             position: relative;
             z-index: 1;
-            max-width: 900px;
+            max-width: 1000px;
         }
 
         .hero-badge {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            background: rgba(79, 70, 229, 0.15);
-            border: 1px solid rgba(79, 70, 229, 0.3);
-            padding: 6px 16px;
+            gap: 10px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 8px 20px;
             border-radius: 100px;
             font-size: 0.85rem;
             color: var(--primary-light);
             margin-bottom: 2rem;
             font-weight: 500;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s 0.2s forwards;
         }
 
-        .hero-badge .dot {
+        .hero-badge .pulse-dot {
             width: 8px;
             height: 8px;
-            background: var(--success);
+            background: #10B981;
             border-radius: 50%;
-            animation: pulse 2s infinite;
+            position: relative;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        .hero-badge .pulse-dot::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: #10B981;
+            animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes ping {
+            75%, 100% { transform: scale(2); opacity: 0; }
         }
 
         .hero h1 {
-            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-size: clamp(3rem, 7vw, 5.5rem);
             font-weight: 900;
-            letter-spacing: -0.03em;
-            line-height: 1.1;
+            letter-spacing: -0.04em;
+            line-height: 1.05;
             margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s 0.4s forwards;
         }
 
-        .hero h1 .gradient {
-            background: linear-gradient(135deg, var(--primary-light), var(--accent-light));
+        .hero h1 .line {
+            display: block;
+        }
+
+        .hero h1 .gradient-text {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent-light) 50%, #EC4899 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            background-size: 200% auto;
+            animation: gradientShift 4s ease-in-out infinite;
         }
 
-        .hero-subtitle {
-            font-size: 1.25rem;
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% center; }
+            50% { background-position: 100% center; }
+        }
+
+        .hero-desc {
+            font-size: 1.2rem;
             color: var(--text-muted);
-            max-width: 600px;
+            max-width: 650px;
             margin: 0 auto 3rem;
-            line-height: 1.7;
+            line-height: 1.8;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s 0.6s forwards;
         }
 
         .hero-buttons {
@@ -241,68 +350,207 @@
             gap: 1rem;
             justify-content: center;
             flex-wrap: wrap;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s 0.8s forwards;
         }
 
-        .hero-stats {
+        .hero-visual {
+            margin-top: 5rem;
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeInUp 1s 1s forwards;
+        }
+
+        .hero-visual-inner {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-visual-inner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+
+        .visual-header {
             display: flex;
-            gap: 3rem;
-            justify-content: center;
-            margin-top: 4rem;
-            padding-top: 3rem;
-            border-top: 1px solid var(--border);
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 1.5rem;
         }
 
-        .stat {
-            text-align: center;
+        .visual-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
         }
 
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--text);
-        }
+        .visual-dot.red { background: #EF4444; }
+        .visual-dot.yellow { background: #F59E0B; }
+        .visual-dot.green { background: #10B981; }
 
-        .stat-label {
-            font-size: 0.85rem;
+        .visual-title {
+            margin-left: auto;
+            font-size: 0.8rem;
             color: var(--text-muted);
-            margin-top: 4px;
+        }
+
+        .classroom-preview {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .seat {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            transition: all 0.3s;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .seat:hover {
+            transform: scale(1.15);
+            z-index: 10;
+        }
+
+        .seat.empty {
+            background: rgba(255,255,255,0.03);
+            border: 1px dashed rgba(255,255,255,0.1);
+        }
+
+        .seat.occupied {
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .seat.occupied::after {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            opacity: 0.6;
+        }
+
+        .seat.occupied:hover::after {
+            opacity: 1;
+        }
+
+        .seat.teacher {
+            grid-column: span 8;
+            aspect-ratio: 8;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(6, 182, 212, 0.2));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            color: var(--primary-light);
+            font-weight: 600;
+        }
+
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== Floating Particles ===== */
+        .particles {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--primary-light);
+            border-radius: 50%;
+            opacity: 0;
+            animation: particleFloat linear infinite;
+        }
+
+        @keyframes particleFloat {
+            0% { opacity: 0; transform: translateY(100vh) scale(0); }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { opacity: 0; transform: translateY(-10vh) scale(1); }
         }
 
         /* ===== Section Common ===== */
         .section {
-            padding: 100px 2rem;
+            padding: 120px 2rem;
             max-width: 1200px;
             margin: 0 auto;
+            position: relative;
         }
 
         .section-header {
             text-align: center;
-            margin-bottom: 4rem;
+            margin-bottom: 5rem;
         }
 
         .section-tag {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             font-size: 0.8rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--accent);
-            margin-bottom: 1rem;
+            letter-spacing: 0.15em;
+            color: var(--primary-light);
+            margin-bottom: 1.25rem;
+            background: rgba(99, 102, 241, 0.1);
+            padding: 6px 16px;
+            border-radius: 100px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
         }
 
         .section-title {
-            font-size: 2.5rem;
+            font-size: clamp(2rem, 4vw, 3rem);
             font-weight: 800;
-            letter-spacing: -0.02em;
+            letter-spacing: -0.03em;
             margin-bottom: 1rem;
         }
 
         .section-desc {
             font-size: 1.1rem;
             color: var(--text-muted);
-            max-width: 600px;
+            max-width: 550px;
             margin: 0 auto;
+            line-height: 1.7;
         }
+
+        /* ===== Scroll Reveal ===== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+        .reveal-delay-4 { transition-delay: 0.4s; }
+        .reveal-delay-5 { transition-delay: 0.5s; }
 
         /* ===== Features ===== */
         .features-grid {
@@ -314,48 +562,104 @@
         .feature-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 2rem;
-            transition: all 0.3s;
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0;
+            transition: opacity 0.4s;
         }
 
         .feature-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-8px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
         }
 
+        .feature-card:hover::before { opacity: 1; }
+
         .feature-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 1.25rem;
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+            position: relative;
         }
 
-        .feature-icon.purple { background: rgba(79, 70, 229, 0.15); }
+        .feature-icon::after {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 20px;
+            opacity: 0.15;
+            filter: blur(15px);
+        }
+
+        .feature-icon.purple { background: rgba(99, 102, 241, 0.15); }
+        .feature-icon.purple::after { background: var(--primary); }
         .feature-icon.cyan { background: rgba(6, 182, 212, 0.15); }
+        .feature-icon.cyan::after { background: var(--accent); }
         .feature-icon.green { background: rgba(16, 185, 129, 0.15); }
+        .feature-icon.green::after { background: #10B981; }
         .feature-icon.orange { background: rgba(245, 158, 11, 0.15); }
+        .feature-icon.orange::after { background: #F59E0B; }
         .feature-icon.pink { background: rgba(236, 72, 153, 0.15); }
+        .feature-icon.pink::after { background: #EC4899; }
         .feature-icon.blue { background: rgba(59, 130, 246, 0.15); }
+        .feature-icon.blue::after { background: #3B82F6; }
 
         .feature-card h3 {
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             font-weight: 700;
             margin-bottom: 0.75rem;
+            letter-spacing: -0.01em;
         }
 
         .feature-card p {
             color: var(--text-muted);
             font-size: 0.95rem;
-            line-height: 1.6;
+            line-height: 1.7;
         }
 
-        /* ===== How It Works ===== */
+        /* ===== Steps ===== */
+        .steps-container {
+            position: relative;
+        }
+
+        .steps-line {
+            position: absolute;
+            top: 60px;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
+            opacity: 0.2;
+        }
+
+        .steps-line-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            width: 0;
+            transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .steps-line-fill.animate { width: 100%; }
+
         .steps {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -363,39 +667,48 @@
             position: relative;
         }
 
-        .steps::before {
-            content: '';
-            position: absolute;
-            top: 40px;
-            left: 12.5%;
-            right: 12.5%;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            opacity: 0.3;
-        }
-
         .step {
             text-align: center;
-            position: relative;
         }
 
-        .step-number {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+        .step-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.75rem;
-            font-weight: 800;
+            font-size: 3rem;
             margin: 0 auto 1.5rem;
             position: relative;
-            z-index: 1;
+            transition: all 0.4s;
+        }
+
+        .step:hover .step-icon {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .step-num {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
         }
 
         .step h3 {
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
         }
@@ -403,60 +716,150 @@
         .step p {
             color: var(--text-muted);
             font-size: 0.9rem;
+            line-height: 1.6;
         }
 
-        /* ===== AI Banner ===== */
-        .ai-banner {
-            background: linear-gradient(135deg, rgba(79, 70, 229, 0.2), rgba(6, 182, 212, 0.2));
-            border: 1px solid rgba(79, 70, 229, 0.3);
-            border-radius: 20px;
-            padding: 3rem;
-            text-align: center;
+        /* ===== Stats ===== */
+        .stats-section {
+            padding: 80px 2rem;
+            background: linear-gradient(180deg, transparent, rgba(99, 102, 241, 0.03), transparent);
+        }
+
+        .stats-grid {
+            max-width: 1000px;
             margin: 0 auto;
-            max-width: 900px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
         }
 
-        .ai-banner .icon {
+        .stat-card {
+            text-align: center;
+            padding: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+        }
+
+        .stat-value {
             font-size: 3rem;
-            margin-bottom: 1rem;
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, var(--text), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .ai-banner h2 {
-            font-size: 1.75rem;
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* ===== AI Section ===== */
+        .ai-section {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(6, 182, 212, 0.08));
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 24px;
+            padding: 4rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), var(--accent), transparent);
+        }
+
+        .ai-card::after {
+            content: '';
+            position: absolute;
+            bottom: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
+            animation: rotateSlow 30s linear infinite;
+        }
+
+        @keyframes rotateSlow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .ai-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .ai-card h2 {
+            font-size: 2rem;
             font-weight: 800;
             margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
         }
 
-        .ai-banner p {
+        .ai-card > p {
             color: var(--text-muted);
             font-size: 1.05rem;
             max-width: 600px;
-            margin: 0 auto;
+            margin: 0 auto 2rem;
             line-height: 1.7;
+            position: relative;
+            z-index: 1;
         }
 
-        .ai-banner .badges {
+        .ai-badges {
             display: flex;
             gap: 1rem;
             justify-content: center;
-            margin-top: 2rem;
             flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
         }
 
-        .ai-banner .badge {
-            background: rgba(255,255,255,0.05);
+        .ai-badge {
+            background: rgba(255,255,255,0.03);
             border: 1px solid var(--border);
-            padding: 8px 16px;
+            padding: 10px 20px;
             border-radius: 100px;
             font-size: 0.85rem;
             color: var(--text-muted);
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .ai-badge:hover {
+            border-color: var(--primary);
+            color: var(--text);
         }
 
         /* ===== Deploy ===== */
-        .deploy-cards {
+        .deploy-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 1.5rem;
@@ -465,24 +868,24 @@
         .deploy-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 2rem;
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
             text-align: center;
-            transition: all 0.3s;
+            transition: all 0.4s;
             position: relative;
         }
 
         .deploy-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-8px);
         }
 
-        .deploy-card.recommended {
+        .deploy-card.featured {
             border-color: var(--primary);
-            box-shadow: 0 0 30px rgba(79, 70, 229, 0.2);
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.15);
         }
 
-        .deploy-card.recommended::before {
+        .deploy-card.featured::before {
             content: '推荐';
             position: absolute;
             top: -12px;
@@ -490,19 +893,19 @@
             transform: translateX(-50%);
             background: linear-gradient(135deg, var(--primary), var(--accent));
             color: white;
-            padding: 4px 16px;
+            padding: 4px 20px;
             border-radius: 100px;
             font-size: 0.75rem;
             font-weight: 600;
         }
 
-        .deploy-card .icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+        .deploy-icon {
+            font-size: 3rem;
+            margin-bottom: 1.25rem;
         }
 
         .deploy-card h3 {
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
         }
@@ -511,38 +914,61 @@
             color: var(--text-muted);
             font-size: 0.9rem;
             margin-bottom: 1.5rem;
+            line-height: 1.6;
         }
 
-        .deploy-card .tags {
+        .deploy-tags {
             display: flex;
             gap: 0.5rem;
             justify-content: center;
             flex-wrap: wrap;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.75rem;
         }
 
-        .deploy-card .tag {
-            background: rgba(255,255,255,0.05);
-            padding: 4px 10px;
-            border-radius: 6px;
+        .deploy-tag {
+            background: rgba(255,255,255,0.03);
+            padding: 5px 12px;
+            border-radius: 8px;
             font-size: 0.75rem;
             color: var(--text-muted);
+            border: 1px solid var(--border);
         }
 
-        /* ===== Tech Stack ===== */
-        .tech-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
+        /* ===== Tech ===== */
+        .tech-marquee {
+            overflow: hidden;
+            padding: 2rem 0;
+            mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+        }
+
+        .tech-track {
+            display: flex;
             gap: 1.5rem;
+            animation: marquee 30s linear infinite;
+            width: max-content;
+        }
+
+        .tech-track:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
         }
 
         .tech-item {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            text-align: center;
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            white-space: nowrap;
             transition: all 0.3s;
+            min-width: 180px;
         }
 
         .tech-item:hover {
@@ -551,101 +977,114 @@
         }
 
         .tech-item .icon {
-            font-size: 2rem;
-            margin-bottom: 0.75rem;
+            font-size: 1.75rem;
         }
 
-        .tech-item h4 {
+        .tech-item .info h4 {
             font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 0.25rem;
         }
 
-        .tech-item p {
-            color: var(--text-muted);
+        .tech-item .info p {
             font-size: 0.8rem;
+            color: var(--text-muted);
         }
 
         /* ===== FAQ ===== */
-        .faq-list {
+        .faq-container {
             max-width: 800px;
             margin: 0 auto;
         }
 
         .faq-item {
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 16px;
             margin-bottom: 1rem;
             overflow: hidden;
             transition: all 0.3s;
+            background: var(--bg-card);
         }
 
         .faq-item:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .faq-item.active {
             border-color: var(--primary);
         }
 
         .faq-question {
-            padding: 1.25rem 1.5rem;
+            padding: 1.5rem 2rem;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-weight: 600;
-            background: var(--bg-card);
+            font-size: 1.05rem;
+            transition: all 0.3s;
         }
 
-        .faq-question::after {
-            content: '+';
-            font-size: 1.5rem;
-            color: var(--text-muted);
-            transition: transform 0.3s;
+        .faq-question:hover {
+            color: var(--primary-light);
         }
 
-        .faq-item.active .faq-question::after {
-            transform: rotate(45deg);
+        .faq-arrow {
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .faq-item.active .faq-arrow {
+            background: var(--primary);
+            transform: rotate(180deg);
         }
 
         .faq-answer {
-            padding: 0 1.5rem;
             max-height: 0;
             overflow: hidden;
-            transition: all 0.3s;
-            background: var(--bg);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .faq-item.active .faq-answer {
-            padding: 1.25rem 1.5rem;
             max-height: 200px;
         }
 
-        .faq-answer p {
+        .faq-answer-inner {
+            padding: 0 2rem 1.5rem;
             color: var(--text-muted);
-            line-height: 1.6;
+            line-height: 1.7;
         }
 
         /* ===== CTA ===== */
-        .cta {
+        .cta-section {
             text-align: center;
-            padding: 100px 2rem;
+            padding: 120px 2rem;
+            position: relative;
         }
 
-        .cta h2 {
-            font-size: 2.5rem;
-            font-weight: 800;
+        .cta-section h2 {
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            font-weight: 900;
+            letter-spacing: -0.03em;
             margin-bottom: 1rem;
         }
 
-        .cta p {
+        .cta-section p {
             color: var(--text-muted);
             font-size: 1.1rem;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
         }
 
         /* ===== Footer ===== */
         .footer {
             border-top: 1px solid var(--border);
             padding: 3rem 2rem;
-            text-align: center;
         }
 
         .footer-inner {
@@ -656,6 +1095,12 @@
             align-items: center;
         }
 
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
         .footer p {
             color: var(--text-muted);
             font-size: 0.85rem;
@@ -663,133 +1108,158 @@
 
         .footer-links {
             display: flex;
-            gap: 1.5rem;
+            gap: 2rem;
         }
 
         .footer-links a {
             color: var(--text-muted);
             text-decoration: none;
             font-size: 0.85rem;
-            transition: color 0.2s;
+            transition: color 0.3s;
         }
 
-        .footer-links a:hover {
-            color: var(--text);
-        }
+        .footer-links a:hover { color: var(--text); }
 
         /* ===== Responsive ===== */
+        @media (max-width: 1024px) {
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .deploy-grid { grid-template-columns: repeat(2, 1fr); }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
         @media (max-width: 768px) {
             .nav-links { display: none; }
             .features-grid { grid-template-columns: 1fr; }
             .steps { grid-template-columns: 1fr 1fr; }
-            .steps::before { display: none; }
-            .deploy-cards { grid-template-columns: 1fr; }
-            .tech-grid { grid-template-columns: 1fr 1fr; }
-            .hero-stats { flex-direction: column; gap: 1.5rem; }
-            .footer-inner { flex-direction: column; gap: 1rem; }
+            .steps-line { display: none; }
+            .deploy-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .tech-track { animation-duration: 20s; }
+            .classroom-preview { grid-template-columns: repeat(6, 1fr); }
+            .ai-card { padding: 2.5rem 1.5rem; }
+            .footer-inner { flex-direction: column; gap: 1.5rem; text-align: center; }
+            .footer-left { flex-direction: column; gap: 1rem; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="header-inner">
+    <div class="cursor-glow" id="cursorGlow"></div>
+
+    <!-- Navigation -->
+    <nav class="nav" id="nav">
+        <div class="nav-inner">
             <a href="#" class="logo">
-                <div class="logo-icon">🪑</div>
+                <div class="logo-mark">🪑</div>
                 <span class="logo-text">SeatWise</span>
             </a>
-            <nav class="nav-links">
+            <div class="nav-links">
                 <a href="#features">功能</a>
-                <a href="#how">流程</a>
+                <a href="#workflow">流程</a>
                 <a href="#deploy">部署</a>
                 <a href="#tech">技术</a>
                 <a href="#faq">FAQ</a>
-                <a href="https://github.com/Meet7th/SeatWise" class="btn btn-primary" target="_blank">
-                    ⭐ GitHub
-                </a>
-            </nav>
+                <a href="https://github.com/Meet7th/SeatWise" class="btn btn-primary" target="_blank">⭐ GitHub</a>
+            </div>
         </div>
-    </header>
+    </nav>
 
     <!-- Hero -->
     <section class="hero">
+        <div class="hero-bg">
+            <div class="gradient-orb orb-1"></div>
+            <div class="gradient-orb orb-2"></div>
+            <div class="gradient-orb orb-3"></div>
+            <div class="hero-grid"></div>
+        </div>
+        <div class="particles" id="particles"></div>
         <div class="hero-content">
             <div class="hero-badge">
-                <span class="dot"></span>
+                <span class="pulse-dot"></span>
                 AI 原生开发 · 开源免费
             </div>
             <h1>
-                AI 驱动的<br>
-                <span class="gradient">智能排座系统</span>
+                <span class="line">AI 驱动的</span>
+                <span class="line"><span class="gradient-text">智能排座系统</span></span>
             </h1>
-            <p class="hero-subtitle">
+            <p class="hero-desc">
                 基于学生性格测评与多维度画像，智能算法一键生成最优座位方案。<br>
                 让排座更科学，让教育更公平。
             </p>
             <div class="hero-buttons">
-                <a href="#deploy" class="btn btn-primary">
-                    🚀 立即部署
-                </a>
-                <a href="https://github.com/Meet7th/SeatWise" class="btn btn-outline" target="_blank">
-                    📖 查看源码
-                </a>
+                <a href="#deploy" class="btn btn-primary">🚀 立即部署</a>
+                <a href="https://github.com/Meet7th/SeatWise" class="btn btn-ghost" target="_blank">📖 查看源码</a>
             </div>
-            <div class="hero-stats">
-                <div class="stat">
-                    <div class="stat-value">35</div>
-                    <div class="stat-label">测评维度</div>
+            <div class="hero-visual">
+                <div class="hero-visual-inner">
+                    <div class="visual-header">
+                        <div class="visual-dot red"></div>
+                        <div class="visual-dot yellow"></div>
+                        <div class="visual-dot green"></div>
+                        <span class="visual-title">教室座位预览</span>
+                    </div>
+                    <div class="classroom-preview" id="classroom"></div>
                 </div>
-                <div class="stat">
-                    <div class="stat-value">AI</div>
-                    <div class="stat-label">智能排座</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">0</div>
-                    <div class="stat-label">使用成本</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">MIT</div>
-                    <div class="stat-label">开源协议</div>
-                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats-section">
+        <div class="stats-grid">
+            <div class="stat-card reveal">
+                <div class="stat-value" data-count="35">0</div>
+                <div class="stat-label">测评维度</div>
+            </div>
+            <div class="stat-card reveal reveal-delay-1">
+                <div class="stat-value" data-count="6">0</div>
+                <div class="stat-label">核心功能模块</div>
+            </div>
+            <div class="stat-card reveal reveal-delay-2">
+                <div class="stat-value" data-count="3">0</div>
+                <div class="stat-label">数据库支持</div>
+            </div>
+            <div class="stat-card reveal reveal-delay-3">
+                <div class="stat-value" data-text="MIT">MIT</div>
+                <div class="stat-label">开源协议</div>
             </div>
         </div>
     </section>
 
     <!-- Features -->
     <section class="section" id="features">
-        <div class="section-header">
-            <div class="section-tag">核心功能</div>
+        <div class="section-header reveal">
+            <div class="section-tag">✦ 核心功能</div>
             <h2 class="section-title">为教育场景深度设计</h2>
             <p class="section-desc">从性格测评到智能排座，覆盖教室座位管理全流程</p>
         </div>
         <div class="features-grid">
-            <div class="feature-card">
+            <div class="feature-card reveal">
                 <div class="feature-icon purple">🧠</div>
                 <h3>AI 智能排座</h3>
                 <p>概率引擎综合考虑性格互补、学习风格、社交偏好等多维度因素，一键生成最优座位方案。</p>
             </div>
-            <div class="feature-card">
+            <div class="feature-card reveal reveal-delay-1">
                 <div class="feature-icon cyan">📊</div>
                 <h3>性格测评系统</h3>
                 <p>35 道科学测评题，覆盖 MBTI、学习风格、社交类型、兴趣爱好、特殊需求等维度。</p>
             </div>
-            <div class="feature-card">
+            <div class="feature-card reveal reveal-delay-2">
                 <div class="feature-icon green">🎨</div>
                 <h3>可视化排座</h3>
                 <p>拖拽手动调整、热力图分析、撤销重做，所见即所得的座位编辑体验。</p>
             </div>
-            <div class="feature-card">
+            <div class="feature-card reveal reveal-delay-1">
                 <div class="feature-icon orange">🔄</div>
                 <h3>申诉管理</h3>
                 <p>学生提交换座申请，AI 自动分析合理性并给出建议，教师一键审批处理。</p>
             </div>
-            <div class="feature-card">
+            <div class="feature-card reveal reveal-delay-2">
                 <div class="feature-icon pink">📤</div>
                 <h3>数据导出</h3>
                 <p>支持 CSV 表格、PNG 截图、PDF 报告等多种格式导出，方便存档和分享。</p>
             </div>
-            <div class="feature-card">
+            <div class="feature-card reveal reveal-delay-3">
                 <div class="feature-icon blue">🔒</div>
                 <h3>安全可靠</h3>
                 <p>JWT 认证、bcrypt 加密、本地部署离线运行，保障学生数据隐私安全。</p>
@@ -797,214 +1267,218 @@
         </div>
     </section>
 
-    <!-- How It Works -->
-    <section class="section" id="how">
-        <div class="section-header">
-            <div class="section-tag">使用流程</div>
+    <!-- Workflow -->
+    <section class="section" id="workflow">
+        <div class="section-header reveal">
+            <div class="section-tag">✦ 使用流程</div>
             <h2 class="section-title">四步完成智能排座</h2>
             <p class="section-desc">简洁高效的工作流程，轻松管理教室座位</p>
         </div>
-        <div class="steps">
-            <div class="step">
-                <div class="step-number">1</div>
-                <h3>创建班级</h3>
-                <p>教师创建班级，配置教室布局，生成邀请码</p>
+        <div class="steps-container">
+            <div class="steps-line">
+                <div class="steps-line-fill" id="stepsLine"></div>
             </div>
-            <div class="step">
-                <div class="step-number">2</div>
-                <h3>学生测评</h3>
-                <p>学生用邀请码注册，完成 35 道性格测评题</p>
-            </div>
-            <div class="step">
-                <div class="step-number">3</div>
-                <h3>AI 排座</h3>
-                <p>系统基于测评数据，AI 一键生成最优座位方案</p>
-            </div>
-            <div class="step">
-                <div class="step-number">4</div>
-                <h3>发布调整</h3>
-                <p>教师审核发布，学生可提交申诉，灵活调整</p>
+            <div class="steps">
+                <div class="step reveal">
+                    <div class="step-icon">
+                        🏫
+                        <div class="step-num">1</div>
+                    </div>
+                    <h3>创建班级</h3>
+                    <p>教师创建班级，配置教室布局，生成邀请码</p>
+                </div>
+                <div class="step reveal reveal-delay-1">
+                    <div class="step-icon">
+                        📝
+                        <div class="step-num">2</div>
+                    </div>
+                    <h3>学生测评</h3>
+                    <p>学生用邀请码注册，完成 35 道性格测评题</p>
+                </div>
+                <div class="step reveal reveal-delay-2">
+                    <div class="step-icon">
+                        🤖
+                        <div class="step-num">3</div>
+                    </div>
+                    <h3>AI 排座</h3>
+                    <p>系统基于测评数据，AI 一键生成最优座位方案</p>
+                </div>
+                <div class="step reveal reveal-delay-3">
+                    <div class="step-icon">
+                        ✅
+                        <div class="step-num">4</div>
+                    </div>
+                    <h3>发布调整</h3>
+                    <p>教师审核发布，学生可提交申诉，灵活调整</p>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- AI Banner -->
-    <section class="section">
-        <div class="ai-banner">
-            <div class="icon">🤖</div>
+    <section class="section ai-section">
+        <div class="ai-card reveal">
+            <div class="ai-icon">🤖</div>
             <h2>AI 原生开发项目</h2>
-            <p>
-                本项目由 AI（Claude）全程开发与维护，从架构设计、代码编写到测试调试，
-                代表了一种全新的软件开发范式 —— 人类提需求，AI 写代码。
-            </p>
-            <div class="badges">
-                <div class="badge">🧠 Claude Code</div>
-                <div class="badge">📝 AI 编码</div>
-                <div class="badge">🔍 AI 审查</div>
-                <div class="badge">🚀 AI 迭代</div>
+            <p>本项目由 AI（Claude）全程开发与维护，从架构设计、代码编写到测试调试，代表了一种全新的软件开发范式 —— 人类提需求，AI 写代码。</p>
+            <div class="ai-badges">
+                <div class="ai-badge">🧠 Claude Code</div>
+                <div class="ai-badge">📝 AI 编码</div>
+                <div class="ai-badge">🔍 AI 审查</div>
+                <div class="ai-badge">🚀 AI 迭代</div>
             </div>
         </div>
     </section>
 
     <!-- Deploy -->
     <section class="section" id="deploy">
-        <div class="section-header">
-            <div class="section-tag">快速部署</div>
+        <div class="section-header reveal">
+            <div class="section-tag">✦ 快速部署</div>
             <h2 class="section-title">选择适合你的部署方式</h2>
             <p class="section-desc">从零基础到专业运维，总有一种方式适合你</p>
         </div>
-        <div class="deploy-cards">
-            <div class="deploy-card recommended">
-                <div class="icon">▲</div>
+        <div class="deploy-grid">
+            <div class="deploy-card featured reveal">
+                <div class="deploy-icon">▲</div>
                 <h3>Vercel + Supabase</h3>
                 <p class="desc">免费云部署，无需服务器，3 分钟上线</p>
-                <div class="tags">
-                    <span class="tag">免费</span>
-                    <span class="tag">云端</span>
-                    <span class="tag">零运维</span>
+                <div class="deploy-tags">
+                    <span class="deploy-tag">免费</span>
+                    <span class="deploy-tag">云端</span>
+                    <span class="deploy-tag">零运维</span>
                 </div>
-                <a href="https://github.com/Meet7th/SeatWise#方式一vercel-一键部署推荐" class="btn btn-primary" target="_blank">
-                    开始部署 →
-                </a>
+                <a href="https://github.com/Meet7th/SeatWise#方式一vercel-一键部署推荐" class="btn btn-primary" target="_blank">开始部署 →</a>
             </div>
-            <div class="deploy-card">
-                <div class="icon">💻</div>
+            <div class="deploy-card reveal reveal-delay-1">
+                <div class="deploy-icon">💻</div>
                 <h3>本地一键启动</h3>
                 <p class="desc">双击即用，无需任何配置，适合体验和开发</p>
-                <div class="tags">
-                    <span class="tag">零配置</span>
-                    <span class="tag">本地</span>
-                    <span class="tag">SQLite</span>
+                <div class="deploy-tags">
+                    <span class="deploy-tag">零配置</span>
+                    <span class="deploy-tag">本地</span>
+                    <span class="deploy-tag">SQLite</span>
                 </div>
-                <a href="https://github.com/Meet7th/SeatWise#方式二本地一键启动" class="btn btn-outline" target="_blank">
-                    查看教程 →
-                </a>
+                <a href="https://github.com/Meet7th/SeatWise#方式二本地一键启动" class="btn btn-ghost" target="_blank">查看教程 →</a>
             </div>
-            <div class="deploy-card">
-                <div class="icon">🐳</div>
+            <div class="deploy-card reveal reveal-delay-2">
+                <div class="deploy-icon">🐳</div>
                 <h3>Docker 部署</h3>
                 <p class="desc">容器化部署，适合有 Docker 经验的用户</p>
-                <div class="tags">
-                    <span class="tag">Docker</span>
-                    <span class="tag">容器化</span>
-                    <span class="tag">MySQL</span>
+                <div class="deploy-tags">
+                    <span class="deploy-tag">Docker</span>
+                    <span class="deploy-tag">容器化</span>
+                    <span class="deploy-tag">MySQL</span>
                 </div>
-                <a href="https://github.com/Meet7th/SeatWise#方式三docker-部署" class="btn btn-outline" target="_blank">
-                    查看教程 →
-                </a>
+                <a href="https://github.com/Meet7th/SeatWise#方式三docker-部署" class="btn btn-ghost" target="_blank">查看教程 →</a>
             </div>
         </div>
     </section>
 
-    <!-- Tech Stack -->
+    <!-- Tech -->
     <section class="section" id="tech">
-        <div class="section-header">
-            <div class="section-tag">技术架构</div>
+        <div class="section-header reveal">
+            <div class="section-tag">✦ 技术架构</div>
             <h2 class="section-title">现代化技术栈</h2>
             <p class="section-desc">采用业界主流技术，稳定可靠，易于维护</p>
         </div>
-        <div class="tech-grid">
-            <div class="tech-item">
-                <div class="icon">💚</div>
-                <h4>Vue 3</h4>
-                <p>前端框架</p>
-            </div>
-            <div class="tech-item">
-                <div class="icon">🔷</div>
-                <h4>TypeScript</h4>
-                <p>类型安全</p>
-            </div>
-            <div class="tech-item">
-                <div class="icon">⚡</div>
-                <h4>Vite</h4>
-                <p>构建工具</p>
-            </div>
-            <div class="tech-item">
-                <div class="icon">🎨</div>
-                <h4>Tailwind CSS</h4>
-                <p>样式框架</p>
-            </div>
-            <div class="tech-item">
-                <div class="icon">🟢</div>
-                <h4>Express</h4>
-                <p>后端框架</p>
-            </div>
-            <div class="tech-item">
-                <div class="icon">🔺</div>
-                <h4>Prisma</h4>
-                <p>ORM 框架</p>
-            </div>
-            <div class="tech-item">
-                <div class="icon">🔐</div>
-                <h4>JWT</h4>
-                <p>身份认证</p>
-            </div>
-            <div class="tech-item">
-                <div class="icon">🗄️</div>
-                <h4>多数据库</h4>
-                <p>MySQL/SQLite/PostgreSQL</p>
+        <div class="tech-marquee">
+            <div class="tech-track">
+                <div class="tech-item"><span class="icon">💚</span><div class="info"><h4>Vue 3</h4><p>前端框架</p></div></div>
+                <div class="tech-item"><span class="icon">🔷</span><div class="info"><h4>TypeScript</h4><p>类型安全</p></div></div>
+                <div class="tech-item"><span class="icon">⚡</span><div class="info"><h4>Vite</h4><p>构建工具</p></div></div>
+                <div class="tech-item"><span class="icon">🎨</span><div class="info"><h4>Tailwind CSS</h4><p>样式框架</p></div></div>
+                <div class="tech-item"><span class="icon">🟢</span><div class="info"><h4>Express</h4><p>后端框架</p></div></div>
+                <div class="tech-item"><span class="icon">🔺</span><div class="info"><h4>Prisma</h4><p>ORM 框架</p></div></div>
+                <div class="tech-item"><span class="icon">🔐</span><div class="info"><h4>JWT</h4><p>身份认证</p></div></div>
+                <div class="tech-item"><span class="icon">🗄️</span><div class="info"><h4>多数据库</h4><p>MySQL/SQLite/PG</p></div></div>
+                <!-- Duplicate for seamless loop -->
+                <div class="tech-item"><span class="icon">💚</span><div class="info"><h4>Vue 3</h4><p>前端框架</p></div></div>
+                <div class="tech-item"><span class="icon">🔷</span><div class="info"><h4>TypeScript</h4><p>类型安全</p></div></div>
+                <div class="tech-item"><span class="icon">⚡</span><div class="info"><h4>Vite</h4><p>构建工具</p></div></div>
+                <div class="tech-item"><span class="icon">🎨</span><div class="info"><h4>Tailwind CSS</h4><p>样式框架</p></div></div>
+                <div class="tech-item"><span class="icon">🟢</span><div class="info"><h4>Express</h4><p>后端框架</p></div></div>
+                <div class="tech-item"><span class="icon">🔺</span><div class="info"><h4>Prisma</h4><p>ORM 框架</p></div></div>
+                <div class="tech-item"><span class="icon">🔐</span><div class="info"><h4>JWT</h4><p>身份认证</p></div></div>
+                <div class="tech-item"><span class="icon">🗄️</span><div class="info"><h4>多数据库</h4><p>MySQL/SQLite/PG</p></div></div>
             </div>
         </div>
     </section>
 
     <!-- FAQ -->
     <section class="section" id="faq">
-        <div class="section-header">
-            <div class="section-tag">常见问题</div>
+        <div class="section-header reveal">
+            <div class="section-tag">✦ 常见问题</div>
             <h2 class="section-title">FAQ</h2>
         </div>
-        <div class="faq-list">
-            <div class="faq-item active">
-                <div class="faq-question">需要会编程才能使用吗？</div>
+        <div class="faq-container">
+            <div class="faq-item active reveal">
+                <div class="faq-question">
+                    <span>需要会编程才能使用吗？</span>
+                    <div class="faq-arrow">↓</div>
+                </div>
                 <div class="faq-answer">
-                    <p>不需要。推荐使用 Vercel 一键部署按钮或本地 `pnpm start`，全程无需编写代码。</p>
+                    <div class="faq-answer-inner">不需要。推荐使用 Vercel 一键部署按钮或本地 pnpm start，全程无需编写代码。</div>
                 </div>
             </div>
-            <div class="faq-item">
-                <div class="faq-question">数据安全吗？</div>
+            <div class="faq-item reveal reveal-delay-1">
+                <div class="faq-question">
+                    <span>数据安全吗？</span>
+                    <div class="faq-arrow">↓</div>
+                </div>
                 <div class="faq-answer">
-                    <p>密码使用 bcrypt 加密存储，接口使用 JWT 认证，本地部署完全离线运行，保障数据安全。</p>
+                    <div class="faq-answer-inner">密码使用 bcrypt 加密存储，接口使用 JWT 认证，本地部署完全离线运行，保障数据安全。</div>
                 </div>
             </div>
-            <div class="faq-item">
-                <div class="faq-question">可以离线使用吗？</div>
+            <div class="faq-item reveal reveal-delay-2">
+                <div class="faq-question">
+                    <span>可以离线使用吗？</span>
+                    <div class="faq-arrow">↓</div>
+                </div>
                 <div class="faq-answer">
-                    <p>可以。本地部署无需联网，OAuth 登录和短信验证功能除外。</p>
+                    <div class="faq-answer-inner">可以。本地部署无需联网，OAuth 登录和短信验证功能除外。</div>
                 </div>
             </div>
-            <div class="faq-item">
-                <div class="faq-question">支持哪些浏览器？</div>
+            <div class="faq-item reveal reveal-delay-3">
+                <div class="faq-question">
+                    <span>支持哪些浏览器？</span>
+                    <div class="faq-arrow">↓</div>
+                </div>
                 <div class="faq-answer">
-                    <p>支持 Chrome、Edge、Firefox、Safari 等主流浏览器，以及移动端浏览器。</p>
+                    <div class="faq-answer-inner">支持 Chrome、Edge、Firefox、Safari 等主流浏览器，以及移动端浏览器。</div>
                 </div>
             </div>
-            <div class="faq-item">
-                <div class="faq-question">如何备份数据？</div>
+            <div class="faq-item reveal reveal-delay-4">
+                <div class="faq-question">
+                    <span>如何备份数据？</span>
+                    <div class="faq-arrow">↓</div>
+                </div>
                 <div class="faq-answer">
-                    <p>SQLite 备份 .db 文件即可；MySQL 使用 mysqldump；Docker 备份 docker-data/ 目录。</p>
+                    <div class="faq-answer-inner">SQLite 备份 .db 文件即可；MySQL 使用 mysqldump；Docker 备份 docker-data/ 目录。</div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- CTA -->
-    <section class="cta">
-        <h2>开始使用智座 SeatWise</h2>
-        <p>免费开源，一键部署，让排座更科学</p>
-        <div class="hero-buttons">
-            <a href="https://github.com/Meet7th/SeatWise" class="btn btn-primary" target="_blank">
-                ⭐ Star on GitHub
-            </a>
-            <a href="#deploy" class="btn btn-outline">
-                🚀 立即部署
-            </a>
+    <section class="cta-section">
+        <h2 class="reveal">开始使用智座 SeatWise</h2>
+        <p class="reveal reveal-delay-1">免费开源，一键部署，让排座更科学</p>
+        <div class="hero-buttons reveal reveal-delay-2">
+            <a href="https://github.com/Meet7th/SeatWise" class="btn btn-primary" target="_blank">⭐ Star on GitHub</a>
+            <a href="#deploy" class="btn btn-ghost">🚀 立即部署</a>
         </div>
     </section>
 
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-inner">
-            <p>© 2026 SeatWise. Built with ❤️ by AI</p>
+            <div class="footer-left">
+                <a href="#" class="logo">
+                    <div class="logo-mark" style="width:32px;height:32px;font-size:18px;">🪑</div>
+                    <span class="logo-text">SeatWise</span>
+                </a>
+                <p>© 2026 SeatWise. Built with ❤️ by AI</p>
+            </div>
             <div class="footer-links">
                 <a href="https://github.com/Meet7th/SeatWise" target="_blank">GitHub</a>
                 <a href="https://github.com/Meet7th/SeatWise/releases" target="_blank">Releases</a>
@@ -1015,21 +1489,164 @@
     </footer>
 
     <script>
-        // FAQ toggle
+        // ===== Cursor Glow =====
+        const cursorGlow = document.getElementById('cursorGlow');
+        let mouseX = 0, mouseY = 0;
+        let glowX = 0, glowY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function animateGlow() {
+            glowX += (mouseX - glowX) * 0.1;
+            glowY += (mouseY - glowY) * 0.1;
+            cursorGlow.style.left = glowX + 'px';
+            cursorGlow.style.top = glowY + 'px';
+            requestAnimationFrame(animateGlow);
+        }
+        animateGlow();
+
+        // ===== Nav Scroll =====
+        const nav = document.getElementById('nav');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // ===== Particles =====
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+            particle.style.animationDelay = (Math.random() * 10) + 's';
+            particle.style.width = particle.style.height = (Math.random() * 3 + 2) + 'px';
+            particlesContainer.appendChild(particle);
+        }
+
+        // ===== Classroom Preview =====
+        const classroom = document.getElementById('classroom');
+        const seatPattern = [
+            0,0,1,1,1,1,0,0,
+            1,1,1,1,1,1,1,1,
+            1,1,1,1,1,1,1,1,
+            1,1,1,1,1,1,1,1,
+            0,1,1,1,1,1,1,0,
+        ];
+
+        // Teacher desk
+        const teacherSeat = document.createElement('div');
+        teacherSeat.className = 'seat teacher';
+        teacherSeat.textContent = '🎓 讲台';
+        classroom.appendChild(teacherSeat);
+
+        // Student seats with staggered animation
+        seatPattern.forEach((occupied, i) => {
+            const seat = document.createElement('div');
+            seat.className = `seat ${occupied ? 'occupied' : 'empty'}`;
+            if (occupied) {
+                seat.style.animationDelay = (i * 0.02) + 's';
+            }
+            classroom.appendChild(seat);
+        });
+
+        // Animate seats appearing
+        const seats = classroom.querySelectorAll('.seat.occupied');
+        seats.forEach((seat, i) => {
+            seat.style.opacity = '0';
+            seat.style.transform = 'scale(0.5)';
+            setTimeout(() => {
+                seat.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                seat.style.opacity = '1';
+                seat.style.transform = 'scale(1)';
+            }, 1000 + i * 30);
+        });
+
+        // ===== Scroll Reveal =====
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // ===== Steps Line Animation =====
+        const stepsLine = document.getElementById('stepsLine');
+        const stepsSection = document.querySelector('.steps-container');
+        const stepsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    stepsLine.classList.add('animate');
+                }
+            });
+        }, { threshold: 0.3 });
+        stepsObserver.observe(stepsSection);
+
+        // ===== Counter Animation =====
+        const statValues = document.querySelectorAll('.stat-value[data-count]');
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const target = entry.target;
+                    const count = parseInt(target.dataset.count);
+                    let current = 0;
+                    const increment = count / 30;
+                    const timer = setInterval(() => {
+                        current += increment;
+                        if (current >= count) {
+                            target.textContent = count;
+                            clearInterval(timer);
+                        } else {
+                            target.textContent = Math.floor(current);
+                        }
+                    }, 40);
+                    counterObserver.unobserve(target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        statValues.forEach(el => counterObserver.observe(el));
+
+        // ===== FAQ Toggle =====
         document.querySelectorAll('.faq-question').forEach(q => {
             q.addEventListener('click', () => {
                 const item = q.parentElement;
-                item.classList.toggle('active');
+                const wasActive = item.classList.contains('active');
+                document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+                if (!wasActive) item.classList.add('active');
             });
         });
 
-        // Smooth scroll
+        // ===== Smooth Scroll =====
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {
                     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // ===== Seat Hover Effect =====
+        classroom.addEventListener('mousemove', (e) => {
+            const seats = classroom.querySelectorAll('.seat.occupied');
+            seats.forEach(seat => {
+                const rect = seat.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                const distance = Math.sqrt(x * x + y * y);
+                if (distance < 100) {
+                    const intensity = 1 - distance / 100;
+                    seat.style.boxShadow = `0 0 ${intensity * 20}px rgba(99, 102, 241, ${intensity * 0.5})`;
+                } else {
+                    seat.style.boxShadow = '';
                 }
             });
         });
