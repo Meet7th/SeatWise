@@ -365,12 +365,37 @@ npx prisma db seed
 
 | 工具 | 说明 | 注册地址 |
 |------|------|----------|
-| Node.js | >= 18.x | https://nodejs.org/ |
 | GitHub 账号 | 代码托管 | https://github.com |
 | Vercel 账号 | 前端 + 后端托管（免费） | https://vercel.com（可用 GitHub 登录） |
 | Supabase 账号 | PostgreSQL 数据库（免费） | https://supabase.com（可用 GitHub 登录） |
 
-#### 一键部署
+#### 方案 A：一键部署按钮（最简单）
+
+> 点击按钮直接部署，无需安装任何工具。按顺序点击两个按钮。
+
+**第 1 步：部署后端 API**
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise&root-directory=apps%2Fserver&env=DATABASE_URL%2CJWT_SECRET%2CJWT_REFRESH_SECRET&envDescription=Supabase%20PostgreSQL%20%E8%BF%9E%E6%8E%A5%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%92%8C%20JWT%20%E5%AF%86%E9%92%A5&envLink=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise%2Fblob%2Fmain%2F.env.example&project-name=seatwise-api&repository-name=SeatWise-API)
+
+部署时填写环境变量：
+
+| 变量名 | 值 | 说明 |
+|--------|-----|------|
+| `DATABASE_URL` | `postgresql://...` | 从 Supabase 获取（见下方说明） |
+| `JWT_SECRET` | 随机字符串 | 至少 32 字符，可用在线生成器 |
+| `JWT_REFRESH_SECRET` | 随机字符串 | 至少 32 字符，与上面不同 |
+
+**第 2 步：部署前端**
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise&root-directory=apps%2Fweb&env=VITE_API_BASE_URL&envDescription=%E5%90%8E%E7%AB%AF%20API%20%E5%9C%B0%E5%9D%80&envLink=https%3A%2F%2Fgithub.com%2FMeet7th%2FSeatWise%2Fblob%2Fmain%2F.env.example&project-name=seatwise&repository-name=SeatWise)
+
+部署时填写环境变量：
+
+| 变量名 | 值 | 说明 |
+|--------|-----|------|
+| `VITE_API_BASE_URL` | `https://你的后端URL/api` | 第 1 步部署后的后端地址 + `/api` |
+
+#### 方案 B：命令行一键部署
 
 ```bash
 # 1. 克隆项目
@@ -394,21 +419,40 @@ pnpm cloud-deploy
 - ✅ 灌入测试数据
 - ✅ 输出访问地址和测试账号
 
-#### 手动操作（仅 1 步）
+#### 获取 Supabase 数据库连接字符串
 
-脚本运行时会提示你：
+1. 打开 https://supabase.com/new 创建免费项目
+2. 等待项目创建完成（约 1-2 分钟）
+3. 进入 **Settings > Database**
+4. 找到 **Connection string**，选择 **Transaction** 模式
+5. 复制连接字符串，将 `[YOUR-PASSWORD]` 替换为你设置的数据库密码
 
-1. **打开 https://supabase.com/new** 创建一个免费项目
-2. 创建完成后，进入 **Settings > Database**
-3. 复制 **Connection string**（选择 Transaction 模式）
-4. 粘贴到脚本提示中
+#### 部署后初始化数据库
 
-其余所有步骤全部自动完成！
+部署完成后，需要初始化数据库表和测试数据：
+
+```bash
+# 克隆项目（如果还没有）
+git clone https://github.com/Meet7th/SeatWise.git
+cd SeatWise
+
+# 安装依赖
+pnpm install
+
+# 配置 Supabase 连接
+cd apps/server
+cp prisma/schema.postgres.prisma prisma/schema.prisma
+# 创建 .env 文件，填入 DATABASE_URL
+
+# 初始化数据库
+npx prisma db push
+npx prisma db seed
+```
 
 #### 访问系统
 
-部署完成后，脚本会输出：
-- 前端地址：`https://你的项目.vercel.app`
+部署完成后：
+- 前端：`https://你的项目.vercel.app`
 - 后端 API：`https://你的API.vercel.app/api/health`
 
 #### Cloudflare 加速（可选）
